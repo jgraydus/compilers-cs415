@@ -41,14 +41,14 @@ public class FirstAndFollow {
                     // for a production A -> a_1 a_2 ... a_n, add first(a_i) to the set of first items until
                     // some first(a_i) does not contain ε
                     for (final Symbol s : p.getRhs()) {
-                        final Set<Symbol> fs = first.get(s);
+                        final Set<Symbol> fs = first(s);
                         rhs.addAll(fs);
                         if (!fs.contains(Symbol.ε)) {
                             rhs.remove(Symbol.ε);
                             break;
                         }
                     }
-                    final Set<Symbol> fs = first.get(p.getLhs());
+                    final Set<Symbol> fs = first(p.getLhs());
                     // found something new. add it and indicate that another iteration of the main loop should happen
                     if (!fs.containsAll(rhs)) {
                         fs.addAll(rhs);
@@ -65,7 +65,7 @@ public class FirstAndFollow {
         g.getNonTerminals().forEach(nt -> follow.put(nt, new HashSet<>()));
 
         // add $ to follow(goal)
-        follow.get(Symbol.goal).add(Symbol.$);
+        follow(Symbol.goal).add(Symbol.$);
 
         // continue this process until no further changes to the follow sets occur
         final boolean[] done = { false };
@@ -78,7 +78,7 @@ public class FirstAndFollow {
                     // for a production A -> b_1 b_2 ... b_n
                     final Set<Symbol> tail = new HashSet<>();
                     // set an initial tail set to contain follow(A) as calculated so far
-                    tail.addAll(follow.get(nt));
+                    tail.addAll(follow(nt));
                     // go through each b_i in reverse order
                     reverse(p.getRhs()).forEach(b -> {
                         // if b_i is a nonterminal
