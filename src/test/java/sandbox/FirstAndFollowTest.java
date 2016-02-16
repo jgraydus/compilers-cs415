@@ -335,4 +335,47 @@ public class FirstAndFollowTest {
         assertEquals(6, firstAndFollow.follow(factor).size());
         assertTrue(firstAndFollow.follow(factor).containsAll(asList(Symbol.$, plus, minus, mult, div, right)));
     }
+
+    /* grammar:
+         expr -> term expr'
+         expr' -> + term expr' | - term expr' | ε
+         term -> factor term'
+         term' -> * factor term' | / factor term' | ε
+         factor -> ( expr ) | num | name
+    */
+    @Test
+    public void firstProduction1() {
+        final Symbol expr = new Symbol.NonTerminal("expr");
+        final Symbol expr_ = new Symbol.NonTerminal("expr'");
+        final Symbol term = new Symbol.NonTerminal("term");
+        final Symbol term_ = new Symbol.NonTerminal("term'");
+        final Symbol plus = new Symbol.Terminal("+");
+        final Symbol minus = new Symbol.Terminal("-");
+        final Symbol mult = new Symbol.Terminal("x");
+        final Symbol div = new Symbol.Terminal("/");
+        final Symbol factor = new Symbol.NonTerminal("factor");
+        final Symbol left = new Symbol.Terminal("(");
+        final Symbol right = new Symbol.Terminal(")");
+        final Symbol num = new Symbol.Terminal("num");
+        final Symbol name = new Symbol.Terminal("name");
+        final Production p1 = new Production(expr, asList(term, expr_));
+        final Production p2 = new Production(expr_, asList(plus, term, expr_));
+        final Production p3 = new Production(expr_, asList(minus, term, expr_));
+        final Production p4 = new Production(expr_, asList(Symbol.ε));
+        final Production p5 = new Production(term, asList(factor, term_));
+        final Production p6 = new Production(term_, asList(mult, factor, term_));
+        final Production p7 = new Production(term_, asList(div, factor, term_));
+        final Production p8 = new Production(term_, asList(Symbol.ε));
+        final Production p9 = new Production(factor, asList(left, expr, right));
+        final Production p10 = new Production(factor, asList(num));
+        final Production p11 = new Production(factor, asList(name));
+        final Grammar g = new Grammar(expr, asList(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11));
+        final FirstAndFollow firstAndFollow = new FirstAndFollow(g);
+
+        assertEquals(3, firstAndFollow.first(p4).size());
+        assertTrue(firstAndFollow.first(p4).containsAll(asList(Symbol.ε, Symbol.$, right)));
+
+        assertEquals(5, firstAndFollow.first(p8).size());
+        assertTrue(firstAndFollow.first(p8).containsAll(asList(Symbol.ε, Symbol.$, plus, minus, right)));
+    }
 }

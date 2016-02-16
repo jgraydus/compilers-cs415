@@ -1,77 +1,53 @@
 package sandbox;
 
-import java.util.*;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class LL1 {
 
-    class Symbol {
-        final String symbol;
-        final boolean terminal;
-        public Symbol(String symbol, boolean terminal) { this.symbol = symbol; this.terminal = terminal; }
-        @Override public String toString() { return symbol; }
-    }
+    public final Map<Symbol,Integer> nonterminals = new HashMap<>();
+    public final Map<Symbol,Integer> terminals = new HashMap<>();
+    public final Production[][] table;
 
+    public LL1(final Grammar g) {
 
-    Stack<Symbol> parseStack = new Stack<>();
-    Stack<Symbol> inputStack = new Stack<>();
+        final int height = g.getNonTerminals().size();
+        final int width = g.getTerminals().size();
 
-    Symbol s = new Symbol("S", false);
-    Symbol lp = new Symbol("(", true);
-    Symbol rp = new Symbol(")", true);
-    Symbol $ = new Symbol("$", true);
+        // could use Map<Symbol, Map<Symbol, Production>> instead
+        table = new Production[height][width];
 
-    Map<Symbol, Map<Symbol,List<Symbol>>> table = new HashMap<>();
-
-
-    public void parse() {
-        Map<Symbol,List<Symbol>> row = new HashMap<>();
-        row.put(lp, asList(lp, s, rp, s));
-        row.put(rp, emptyList());
-        row.put($, emptyList());
-        table.put(s, row);
-
-        parseStack.push($);
-        parseStack.push(s);
-
-        inputStack.push($);
-        inputStack.push(rp);
-        inputStack.push(rp);
-        inputStack.push(lp);
-        inputStack.push(rp);
-        inputStack.push(lp);
-        inputStack.push(lp);
-
-        while (parseStack.peek() != $) {
-            System.out.println(">>>inputStack=" + inputStack);
-            System.out.println(">>>parseStack-" + parseStack);
-
-            if (parseStack.peek().terminal && parseStack.peek() == inputStack.peek()) {
-                System.out.println("matching " + inputStack.pop());
-                parseStack.pop();
-            } else if (!parseStack.peek().terminal && inputStack.peek().terminal) {
-                Symbol A = parseStack.peek();
-                Symbol a = inputStack.peek();
-                List<Symbol> rule = table.get(A).get(a);
-                System.out.println("generating " + rule);
-                parseStack.pop();
-                for (int i=rule.size()-1; i>=0; i--) { parseStack.push(rule.get(i)); }
-            }
+        // assign each nonterminal to a row
+        for (int i=1; i<= g.getNonTerminals().size(); i++) {
+            final List<Symbol> nts = new ArrayList<>(g.getNonTerminals());
+            nonterminals.put(nts.get(i), i);
         }
 
-        if (parseStack.peek() == $ && inputStack.peek() == $) {
-            System.out.println("ACCEPT");
-        } else {
-            System.out.println("ERROR");
+        // assign each terminal to a column
+        for (int i=1; i<= g.getTerminals().size(); i++) {
+            final List<Symbol> nts = new ArrayList<>(g.getTerminals());
+            terminals.put(nts.get(i), i);
         }
 
-    }
+        final FirstAndFollow faf = new FirstAndFollow(g);
 
-    public static void main(String... args) {
-        LL1 ll1 = new LL1();
-        ll1.parse();
+        g.getNonTerminals().forEach(nt -> {
+            g.get(nt).forEach(p -> {
+                faf.first(p).stream()
+                        .filter(Symbol::isTerminal)
+                        .forEach(t -> {
+                            final int row = nonterminals.get(nt);
+                            final int col = terminals.get(t);
+                            if (table[row][col] == null) {
+                                table[row][col] = p;
+                            } else {
+                                throw new IllegalStateException("not an LL(1) grammar");
+                            }
+                        });
+            });
+        });
     }
 
 }
