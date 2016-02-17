@@ -23,6 +23,7 @@ public class TinyLL1 {
     private final Symbol readStmt = new Symbol.NonTerminal("read-stmt");
     private final Symbol writeStmt = new Symbol.NonTerminal("write-stmt");
     private final Symbol exp = new Symbol.NonTerminal("exp");
+    private final Symbol exp_ = new Symbol.NonTerminal("exp'");
     private final Symbol comparisonOp = new Symbol.NonTerminal("comparison-op");
     private final Symbol simpleExp = new Symbol.NonTerminal("simple-exp");
     private final Symbol simpleExp_ = new Symbol.NonTerminal("simple-exp'");
@@ -66,8 +67,9 @@ public class TinyLL1 {
         ps.add(new Production(assignStmt, asList(identifier, assign, exp)));
         ps.add(new Production(readStmt, asList(read, identifier)));
         ps.add(new Production(writeStmt, asList(write, exp)));
-        ps.add(new Production(exp, asList(simpleExp, comparisonOp, simpleExp)));
-        ps.add(new Production(exp, asList(simpleExp)));
+        ps.add(new Production(exp, asList(simpleExp, exp_)));
+        ps.add(new Production(exp_, asList(comparisonOp, simpleExp)));
+        ps.add(new Production(exp_, asList(Symbol.ε)));
         ps.add(new Production(comparisonOp, asList(lt)));
         ps.add(new Production(comparisonOp, asList(eq)));
         ps.add(new Production(simpleExp, asList(term, simpleExp_)));
