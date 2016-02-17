@@ -31,9 +31,9 @@ public class LL1Test {
 
         final List<String> sentence = asList("b", "a");
 
-        final LL1 ll1 = new LL1(g);
+        final LL1 ll1 = new LL1(g, toSymbol);
 
-        ll1.parse(sentence, toSymbol);
+        System.out.println(ll1.parse(sentence));
 
         // TODO verify parse tree
     }
@@ -66,9 +66,9 @@ public class LL1Test {
 
         final List<String> sentence = asList("(", "(", "a", ")", "a", ")");
 
-        final LL1 ll1 = new LL1(g);
+        final LL1 ll1 = new LL1(g, toSymbol);
 
-        ll1.parse(sentence, toSymbol);
+        System.out.println(ll1.parse(sentence));
 
         // TODO verify parse tree
     }
