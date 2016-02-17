@@ -1,15 +1,13 @@
 package tiny;
 
-import sandbox.Grammar;
-import sandbox.LL1;
-import sandbox.Production;
-import sandbox.Symbol;
+import sandbox.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 
 public class TinyLL1 {
     private final Symbol program = new Symbol.NonTerminal("program");
@@ -60,6 +58,11 @@ public class TinyLL1 {
         ps.add(new Production(stmtSequence, asList(statement, stmtSequence_)));
         ps.add(new Production(stmtSequence_, asList(semicolon, statement, stmtSequence_)));
         ps.add(new Production(stmtSequence_, asList(Symbol.ε)));
+        ps.add(new Production(statement, asList(ifStmt)));
+        ps.add(new Production(statement, asList(readStmt)));
+        ps.add(new Production(statement, asList(writeStmt)));
+        ps.add(new Production(statement, asList(assignStmt)));
+        ps.add(new Production(statement, asList(repeatStmt)));
         ps.add(new Production(ifStmt, asList(ifS, exp, then, stmtSequence, elsePart)));
         ps.add(new Production(elsePart, asList(end)));
         ps.add(new Production(elsePart, asList(elseS, stmtSequence, end)));
@@ -87,6 +90,8 @@ public class TinyLL1 {
         ps.add(new Production(factor, asList(identifier)));
     }
 
+    private final LL1<Token> parser;
+
     public TinyLL1() {
         final Grammar g = new Grammar(program, ps);
 
@@ -101,7 +106,7 @@ public class TinyLL1 {
                 case RIGHT_PAREN: return right;
                 case READ: return read;
                 case WRITE: return write;
-                case REPEAT: return read;
+                case REPEAT: return repeat;
                 case UNTIL: return untilS;
                 case NUM: return number;
                 case LESS_THAN: return lt;
@@ -116,10 +121,14 @@ public class TinyLL1 {
             }
         };
 
-        final LL1<Token> parser = new LL1<>(g, toSymbol);
+        parser = new LL1<>(g, toSymbol);
     }
 
-    public static void main(String... args) {
-        new TinyLL1();
+    public ParseTree<Token> parse(final List<Token> input) {
+        final List<Token> in = input.stream()
+                .filter(t -> t.type != Token.Type.COMMENT)
+                .filter(t -> t.type != Token.Type.END_OF_FILE)
+                .collect(toList());
+        return parser.parse(in);
     }
 }

@@ -105,7 +105,9 @@ public class LL1<T> {
                 final int col = terminals.get(lookahead);
                 final Production p = table[row][col];
                 // if there is no entry in the table, the input is not in the language of the grammar
-                if (p == null) { throw new IllegalStateException(nextT.toString()); }
+                if (p == null) {
+                    throw new IllegalStateException(nextT.toString());
+                }
                 parseStack.pop();
                 final Stack<ParseTree<T>> tmp = new Stack<>();
                 p.getRhs().stream()
