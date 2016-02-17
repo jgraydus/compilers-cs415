@@ -32,13 +32,13 @@ public class FirstAndFollow {
         final Set<Symbol> result = new HashSet<>();
         for (final Symbol s : p.getRhs()) {
             result.addAll(first(s));
-            if (!first(s).contains(Symbol.ε)) { break; }
+            if (!first(s).contains(Symbol.ε)) { return result; }
         }
         result.addAll(follow(p.getLhs()));
         return result;
     }
 
-    /** compute first(s) all symbols s in the grammar g */
+    /** compute first(s) for all symbols s in the grammar g */
     private void first(final Grammar g) {
         // for each terminal t, first(t) = {t}
         g.getTerminals().forEach(t -> first.put(t, singleton(t)));

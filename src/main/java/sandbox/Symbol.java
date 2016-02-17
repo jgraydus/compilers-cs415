@@ -21,7 +21,7 @@ public abstract class Symbol {
     /** special symbol indicating end of input. added automatically */
     public static final Symbol $ = new Terminal("$");
 
-    @Override final public boolean equals(Object other) { return this == other; }
+    @Override final public boolean equals(Object other) { return str.equals(((Symbol)other).str); }
     @Override final public String toString() { return str; }
 
     public static class Terminal extends Symbol {
