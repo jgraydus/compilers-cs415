@@ -10,6 +10,7 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 
 public class TinyLL1 {
+    // nonterminals
     private final Symbol program = new Symbol.NonTerminal("program");
     private final Symbol stmtSequence = new Symbol.NonTerminal("stmt-sequence");
     private final Symbol stmtSequence_ = new Symbol.NonTerminal("stmt-sequence'");
@@ -31,6 +32,7 @@ public class TinyLL1 {
     private final Symbol mulOp = new Symbol.NonTerminal("mul-op");
     private final Symbol factor = new Symbol.NonTerminal("factor");
 
+    // terminals
     private final Symbol semicolon = new Symbol.Terminal(";");
     private final Symbol identifier = new Symbol.Terminal("identifier");
     private final Symbol ifS = new Symbol.Terminal("if");
@@ -52,6 +54,7 @@ public class TinyLL1 {
     private final Symbol right = new Symbol.Terminal(")");
     private final Symbol number = new Symbol.Terminal("number");
 
+    // production rules
     private final List<Production> ps = new ArrayList<>();
     {
         ps.add(new Production(program, asList(stmtSequence)));
@@ -90,41 +93,42 @@ public class TinyLL1 {
         ps.add(new Production(factor, asList(identifier)));
     }
 
+    // associate token types to grammar symbols
+    final Function<Token,Symbol> toSymbol = token -> {
+        switch (token.type) {
+            case ASSIGNMENT: return assign;
+            case ELSE: return elseS;
+            case END: return end;
+            case EQUAL: return eq;
+            case IDENTIFIER: return identifier;
+            case LEFT_PAREN: return left;
+            case RIGHT_PAREN: return right;
+            case READ: return read;
+            case WRITE: return write;
+            case REPEAT: return repeat;
+            case UNTIL: return untilS;
+            case NUM: return number;
+            case LESS_THAN: return lt;
+            case PLUS: return plus;
+            case MINUS: return minus;
+            case TIMES: return times;
+            case OVER: return div;
+            case THEN: return then;
+            case IF: return ifS;
+            case SEMICOLON: return semicolon;
+            default: throw new IllegalArgumentException(token + " does not correspond to a terminal");
+        }
+    };
+
     private final LL1<Token> parser;
 
     public TinyLL1() {
         final Grammar g = new Grammar(program, ps);
-
-        final Function<Token,Symbol> toSymbol = token -> {
-            switch (token.type) {
-                case ASSIGNMENT: return assign;
-                case ELSE: return elseS;
-                case END: return end;
-                case EQUAL: return eq;
-                case IDENTIFIER: return identifier;
-                case LEFT_PAREN: return left;
-                case RIGHT_PAREN: return right;
-                case READ: return read;
-                case WRITE: return write;
-                case REPEAT: return repeat;
-                case UNTIL: return untilS;
-                case NUM: return number;
-                case LESS_THAN: return lt;
-                case PLUS: return plus;
-                case MINUS: return minus;
-                case TIMES: return times;
-                case OVER: return div;
-                case THEN: return then;
-                case IF: return ifS;
-                case SEMICOLON: return semicolon;
-                default: throw new IllegalArgumentException(token + " does not correspond to a terminal");
-            }
-        };
-
         parser = new LL1<>(g, toSymbol);
     }
 
     public ParseTree<Token> parse(final List<Token> input) {
+        // the scanner provides tokens for comments and eof.  these are not necessary
         final List<Token> in = input.stream()
                 .filter(t -> t.type != Token.Type.COMMENT)
                 .filter(t -> t.type != Token.Type.END_OF_FILE)
