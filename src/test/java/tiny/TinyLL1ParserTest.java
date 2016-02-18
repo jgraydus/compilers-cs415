@@ -5,12 +5,12 @@ import token.CharacterSource;
 
 import java.util.List;
 
-public class TinyLL1Test {
+public class TinyLL1ParserTest {
 
     @Test
     public void test1() {
         final TinyScanner scanner = new TinyScanner();
-        final TinyLL1 parser = new TinyLL1();
+        final TinyLL1Parser parser = new TinyLL1Parser();
 
         final String program = TinyScannerTest.getTestProgram();
 

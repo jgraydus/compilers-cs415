@@ -1,5 +1,5 @@
 /* Joshua Graydus | February 2016 */
-package sandbox;
+package parser;
 
 import java.util.*;
 

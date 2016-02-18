@@ -1,9 +1,14 @@
-package sandbox;
+package parser;
+
+import data.Either;
 
 import java.util.*;
 import java.util.function.Function;
 
-public class LL1<T> {
+import static data.Either.left;
+import static data.Either.right;
+
+public class LL1Parser<T> {
 
     private final Symbol start;
     private final Map<Symbol,Integer> nonterminals = new HashMap<>();
@@ -16,7 +21,7 @@ public class LL1<T> {
      * @param toSymbol a function that associates each possible input token
      *                 of type T to a Symbol object in the grammar g
      */
-    public LL1(final Grammar g, Function<T,Symbol> toSymbol) {
+    public LL1Parser(final Grammar g, Function<T,Symbol> toSymbol) {
         this.toSymbol = toSymbol;
         start = g.getStart();
 
@@ -62,16 +67,24 @@ public class LL1<T> {
         });
     }
 
-    /** @return a full parse tree for the given input */
-    public ParseTree<T> parse(List<T> tokens) {
+    /** @return either a list of erroneous tokens or a full parse tree of the input */
+    public Either<List<T>, ParseTree<T>> parse(final List<T> tokens) {
+        final List<T> errors = new LinkedList<>();
+        final ParseTree<T> result = parse(tokens.iterator(), errors);
+        return errors.isEmpty() ? right(result) : left(errors);
+    }
 
+    public ParseTree<T> parse(final Iterator<T> iter, final List<T> errors) {
         // start with a parse stack containing a root node for the start symbol
         final Stack<ParseTree<T>> parseStack = new Stack<>();
         final ParseTree<T> root = new ParseTree<>(start, null);
         parseStack.push(root);
 
+        // no input
+        if (!iter.hasNext()) { return root; }
+
         // nextT will hold the next token in the input.  this will give the lookahead symbol
-        final Iterator<T> iter = tokens.iterator();
+        //final Iterator<T> iter = tokens.iterator();
         T nextT = iter.hasNext() ? iter.next() : null;
 
         while (true) {
@@ -81,6 +94,12 @@ public class LL1<T> {
 
             // the accept condition:  no more input and parse stack is empty
             if (lookahead.equals(Symbol.$) && parseStack.isEmpty()) { break; }
+
+            // empty parse stack at this point is unrecoverable error
+            if (parseStack.isEmpty()) {
+                errors.add(nextT);
+                return root;
+            }
 
             final ParseTree<T> top = parseStack.peek();
             final Symbol topS = top.getSymbol();
@@ -92,7 +111,11 @@ public class LL1<T> {
                     top.setT(nextT); // first add the token to the current parse tree node
                     nextT = iter.hasNext() ? iter.next() : null;
                     parseStack.pop();
-                } else { throw new IllegalStateException(topS + " != " + lookahead); }
+                } else {
+                    // report current token as an error and start over with the next token
+                    errors.add(nextT);
+                    return parse(iter, errors);
+                }
             }
             // if the current symbol at the top of the stack is a nonterminal, find and use an appropriate
             // production based on the lookahead
@@ -103,7 +126,9 @@ public class LL1<T> {
                 final Production p = table[row][col];
                 // if there is no entry in the table, the input is not in the language of the grammar
                 if (p == null) {
-                    throw new IllegalStateException(nextT.toString());
+                    // report current token as an error and start over with the next token
+                    errors.add(nextT);
+                    return parse(iter, errors);
                 }
                 parseStack.pop();
                 final Stack<ParseTree<T>> tmp = new Stack<>();
@@ -113,15 +138,16 @@ public class LL1<T> {
                         // create a new ParseTree node for each symbol that is being added
                         .map(s -> new ParseTree<T>(s, null))
                         .forEach(t -> {
-                            // add all the new parse tree nodes as children to parse tree at the top of the stack
+                            // add all the new parse tree nodes as children to the parse tree at the top of the stack
                             top.addChild(t);
                             tmp.push(t);
                         });
-                // the tmp stack is used so that the new parseStack entries can be pushed in reverse order
+                // the tmp stack is used so that the new parse stack entries can be pushed in reverse order
                 while (!tmp.isEmpty()) { parseStack.push(tmp.pop()); }
             }
         }
 
+        // success!
         return root;
     }
 }

@@ -1,6 +1,7 @@
 package tiny;
 
-import sandbox.*;
+import data.Either;
+import parser.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.function.Function;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 
-public class TinyLL1 {
+public class TinyLL1Parser {
     // nonterminals
     private final Symbol program = new Symbol.NonTerminal("program");
     private final Symbol stmtSequence = new Symbol.NonTerminal("stmt-sequence");
@@ -120,19 +121,39 @@ public class TinyLL1 {
         }
     };
 
-    private final LL1<Token> parser;
+    private final LL1Parser<Token> parser;
 
-    public TinyLL1() {
+    public TinyLL1Parser() {
         final Grammar g = new Grammar(program, ps);
-        parser = new LL1<>(g, toSymbol);
+        parser = new LL1Parser<>(g, toSymbol);
     }
 
     public ParseTree<Token> parse(final List<Token> input) {
-        // the scanner provides tokens for comments and eof.  these are not necessary
+        // the scanner provides tokens for comments and eof.  these are not part of the grammar
         final List<Token> in = input.stream()
                 .filter(t -> t.type != Token.Type.COMMENT)
                 .filter(t -> t.type != Token.Type.END_OF_FILE)
                 .collect(toList());
-        return parser.parse(in);
+
+        final Either<List<Token>,ParseTree<Token>> result = parser.parse(in);
+
+        result.getLeft().ifPresent(errors -> {
+            throw new RuntimeException(errorReport(errors));
+        });
+
+        return result.getRight().get();
+    }
+
+    private String errorReport(List<Token> errors) {
+        final StringBuilder sb = new StringBuilder();
+        for (final Token t : errors) {
+            sb.append("\n");
+            sb.append("unexpected token ");
+            sb.append(t.toString());
+            sb.append(" ");
+            sb.append(t.src.toString());
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 }

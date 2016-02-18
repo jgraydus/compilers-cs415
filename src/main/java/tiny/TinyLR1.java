@@ -1,8 +1,8 @@
 package tiny;
 
-import sandbox.Grammar;
-import sandbox.Production;
-import sandbox.Symbol;
+import parser.Grammar;
+import parser.Production;
+import parser.Symbol;
 
 import java.util.ArrayList;
 import java.util.List;

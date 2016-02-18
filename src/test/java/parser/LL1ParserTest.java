@@ -1,4 +1,4 @@
-package sandbox;
+package parser;
 
 import org.junit.Test;
 
@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 import static java.util.Arrays.asList;
 
-public class LL1Test {
+public class LL1ParserTest {
 
     @Test
     public void test1() {
@@ -31,7 +31,7 @@ public class LL1Test {
 
         final List<String> sentence = asList("b", "a");
 
-        final LL1 ll1 = new LL1(g, toSymbol);
+        final LL1Parser ll1 = new LL1Parser(g, toSymbol);
 
         System.out.println(ll1.parse(sentence));
 
@@ -66,9 +66,38 @@ public class LL1Test {
 
         final List<String> sentence = asList("(", "(", "a", ")", "a", ")");
 
-        final LL1 ll1 = new LL1(g, toSymbol);
+        final LL1Parser ll1 = new LL1Parser(g, toSymbol);
 
         System.out.println(ll1.parse(sentence));
+
+        // TODO verify parse tree
+    }
+
+    @Test
+    public void test3() {
+        /*  S -> b A
+            A -> a A | ε    */
+
+        final Symbol S = new Symbol.NonTerminal("S");
+        final Symbol A = new Symbol.NonTerminal("A");
+        final Symbol a = new Symbol.Terminal("a");
+        final Symbol b = new Symbol.Terminal("b");
+
+        final Production p1 = new Production(S, asList(b, A));
+        final Production p2 = new Production(A, asList(a, A));
+        final Production p3 = new Production(A, asList(Symbol.ε));
+
+        final Symbol start = S;
+        final List<Production> ps = asList(p1, p2, p3);
+        final Grammar g = new Grammar(start, ps);
+
+        final Function<String,Symbol> toSymbol = str -> str.equals("a") ? a : b;
+
+        final List<String> sentence = asList("b", "a", "b", "a", "a", "a", "x", "d");
+
+        final LL1Parser ll1 = new LL1Parser(g, toSymbol);
+
+        System.out.println(ll1.parse(sentence).getLeft().get());
 
         // TODO verify parse tree
     }
