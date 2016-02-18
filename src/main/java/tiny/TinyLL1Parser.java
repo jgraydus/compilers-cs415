@@ -55,6 +55,33 @@ public class TinyLL1Parser {
     private final Symbol right = new Symbol.Terminal(")");
     private final Symbol number = new Symbol.Terminal("number");
 
+    /*
+        LL(1) grammar for TINY.  note left recursion removed from stmt-sequence, exp,
+        simple-exp, and term.  Also, if-stmt was factored into the if part and else part.
+
+        program        -> stmt-sequence
+        stmt-sequence  -> statement stmt-sequence'
+        stmt-sequence' -> ';' statement stmt-sequence' | ε
+        statement      -> if-stmt | read-stmt | write-stmt | assign-stmt | repeat-stmt
+        if-stmt        -> 'if' exp 'then' stmt-sequence else-part
+        else-part      -> 'end' | 'else' stmt-sequence 'end'
+        repeat-stmt    -> 'repeat' stmt-sequence 'until' exp
+        assign-stmt    -> identifier ':=' exp
+        read-stmt      -> 'read' identifier
+        write-stmt     -> 'write' exp
+        exp            -> simple-exp exp'
+        exp'           -> comparison-op exp' | ε
+        comparison-op  -> '<' | '='
+        simple-exp     -> term simple-exp'
+        simple-exp'    -> add-op term simple-exp' | ε
+        add-op         -> '+' | '-'
+        term           -> factor term'
+        term'          -> mul-op factor term' | ε
+        mul-op         -> '*' | '/'
+        factor         -> '(' exp ')' | number | identifier
+     */
+
+
     // production rules
     private final List<Production> ps = new ArrayList<>();
     {
