@@ -38,7 +38,24 @@ public class FirstAndFollow {
         return result;
     }
 
-    /** compute first(s) for all symbols s in the grammar g */
+    /**
+     * compute first(x) for all symbols x in the grammar g <br>
+     * <br>
+     * first(x), where x is a grammar symbol, is defined as:<br>
+     * <ol>
+     *     <li>if x is a terminal or ε, then first(x) = {x} </li>
+     *     <li>if x is a nonterminal, then for each production x -> a_1 ... a_n, first(x)
+     *     contains:
+     *         <ul>
+     *         <li>first(a_1) - {ε}</li>
+     *         <li>first(a_2) if first(a_1) contains ε</li>
+     *         <li>first(a_3) if first(a_2) contains ε</li>
+     *         <li>etc.</li>
+     *         <li>ε if and only if first(a_i) contains ε for all i</li>
+     *         </ul>
+     *     </li>
+     * </ol>
+     */
     private void first(final Grammar g) {
         // for each terminal t, first(t) = {t}
         g.getTerminals().forEach(t -> first.put(t, singleton(t)));
@@ -75,7 +92,16 @@ public class FirstAndFollow {
         }
     }
 
-    /** compute follow(s) for all nonterminal symbols s in the grammar g */
+    /**
+     * compute follow(x) for all nonterminal symbols x in the grammar g<br>
+     * <br>
+     * follow(x), for a grammar symbol x, contains:<br>
+     * <ol>
+     *     <li>$ if x is the start symbol</li>
+     *     <li>first(b) - {ε} for all productions of the form A -> axb</li>
+     *     <li>follow(A) for all productions of the form A -> axb where first(b) contains ε</li>
+     * </ol>
+     */
     private void follow(final Grammar g) {
         // for each nonterminal nt, initialize follow(nt) to an empty set
         g.getNonTerminals().forEach(nt -> follow.put(nt, new HashSet<>()));
@@ -98,7 +124,7 @@ public class FirstAndFollow {
                     // go through each b_i in reverse order
                     reverse(p.getRhs()).forEach(b -> {
                         // if b_i is a nonterminal
-                        if (b instanceof Symbol.NonTerminal) {
+                        if (!b.isTerminal()) {
                             // and tail contains items that are not in follow(b_i)
                             if (!follow.get(b).containsAll(tail)) {
                                 // add the items to follow(b_i)

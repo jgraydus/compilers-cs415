@@ -12,7 +12,7 @@ public class TinyLL1ParserTest {
         final TinyScanner scanner = new TinyScanner();
         final TinyLL1Parser parser = new TinyLL1Parser();
 
-        final String program = TinyScannerTest.getTestProgram();
+        final String program = TinyScannerTest.getTestProgram("001.tny");
 
         final List<Token> tokens = scanner.tokenize(new CharacterSource(program))
                 .getRight().get().getLeft();

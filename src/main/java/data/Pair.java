@@ -2,7 +2,7 @@
 package data;
 
 /**
- * A container for aggregating exactly two values of different types.
+ * A container for aggregating exactly two values of potentially different types.
  */
 public class Pair<L,R> {
     private final L l;

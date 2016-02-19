@@ -20,16 +20,16 @@ import static tiny.Token.*;
 
 public class TinyScannerTest {
 
-    static String getTestProgram() {
+    static String getTestProgram(final String filename) {
         final BufferedReader reader =
-                new BufferedReader(new InputStreamReader(TinyScannerTest.class.getResourceAsStream("test.tny")));
+                new BufferedReader(new InputStreamReader(TinyScannerTest.class.getResourceAsStream(filename)));
         return String.join( "\n", reader.lines().collect(Collectors.toList()));
     }
 
     @Test
     public void test() {
         final Tokenizer<Token,Character> tiny = new TinyScanner();
-        final String testProgram = getTestProgram();
+        final String testProgram = getTestProgram("test.tny");
         final Source<Character> src = new CharacterSource(testProgram);
         final Either<Error<Character>,Pair<List<Token>,Source<Character>>> result = tiny.tokenize(src);
         assertTrue(result.getRight().isPresent());
