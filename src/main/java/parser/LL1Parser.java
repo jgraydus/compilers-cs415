@@ -1,3 +1,4 @@
+/* Joshua Graydus | February 2016 */
 package parser;
 
 import data.Either;
@@ -21,7 +22,7 @@ public class LL1Parser<T> {
      * @param toSymbol a function that associates each possible input token
      *                 of type T to a Symbol object in the grammar g
      */
-    public LL1Parser(final Grammar g, Function<T,Symbol> toSymbol) {
+    public LL1Parser(final Grammar g, final Function<T,Symbol> toSymbol) {
         this.toSymbol = toSymbol;
         start = g.getStart();
 

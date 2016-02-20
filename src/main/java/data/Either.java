@@ -11,7 +11,7 @@ public class Either<L,R> {
     private final Optional<L> l;
     private final Optional<R> r;
 
-    private Either(L l, R r) {
+    private Either(final L l, final R r) {
         if (l == null && r == null) throw new IllegalArgumentException("null values not permitted");
         this.l = Optional.ofNullable(l);
         this.r = Optional.ofNullable(r);
@@ -20,6 +20,6 @@ public class Either<L,R> {
     public Optional<L> getLeft() { return l; }
     public Optional<R> getRight() { return r; }
 
-    public static <A,B> Either<A,B> left(A a) { return new Either<>(a, null); }
-    public static <A,B> Either<A,B> right(B b) { return new Either<>(null, b); }
+    public static <A,B> Either<A,B> left(final A a) { return new Either<>(a, null); }
+    public static <A,B> Either<A,B> right(final B b) { return new Either<>(null, b); }
 }

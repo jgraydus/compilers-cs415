@@ -1,2 +1,4 @@
 read x;
-write x
+y := 3 + (4 - x) * 10 / 3;
+z := x < y;
+write y

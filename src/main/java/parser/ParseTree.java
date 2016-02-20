@@ -1,7 +1,11 @@
+/* Joshua Graydus | February 2016 */
 package parser;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
+import static java.util.Collections.unmodifiableList;
 
 public class ParseTree<T> {
     private final Symbol s;
@@ -20,6 +24,8 @@ public class ParseTree<T> {
         return s;
     }
 
+    public List<ParseTree<T>> getChildren() { return unmodifiableList(children); }
+
     public void addChild(final ParseTree<T> child) {
         children.add(child);
     }
@@ -29,7 +35,7 @@ public class ParseTree<T> {
         return string(0);
     }
 
-    private String string(int depth) {
+    private String string(final int depth) {
         final StringBuilder sb = new StringBuilder();
         for (int i=0; i<depth; i++) { sb.append("   "); }
         sb.append("Symbol="+s+", Token="+t);

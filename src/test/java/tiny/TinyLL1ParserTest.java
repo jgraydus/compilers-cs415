@@ -1,6 +1,7 @@
 package tiny;
 
 import org.junit.Test;
+import parser.ParseTree;
 import token.CharacterSource;
 
 import java.util.List;
@@ -12,11 +13,13 @@ public class TinyLL1ParserTest {
         final TinyScanner scanner = new TinyScanner();
         final TinyLL1Parser parser = new TinyLL1Parser();
 
-        final String program = TinyScannerTest.getTestProgram("001.tny");
+        final String program = TinyScannerTest.getTestProgram("test.tny");
 
         final List<Token> tokens = scanner.tokenize(new CharacterSource(program))
                 .getRight().get().getLeft();
 
-        System.out.println(parser.parse(tokens));
+        final ParseTree<Token> tree = parser.parse(tokens);
+
+        //System.out.println(tree);
     }
 }

@@ -1,9 +1,11 @@
+/* Joshua Graydus | February 2016 */
 package tiny;
 
 import data.Either;
 import parser.*;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -70,7 +72,7 @@ public class TinyLL1Parser {
         read-stmt      -> 'read' identifier
         write-stmt     -> 'write' exp
         exp            -> simple-exp exp'
-        exp'           -> comparison-op exp' | ε
+        exp'           -> comparison-op simple-exp | ε
         comparison-op  -> '<' | '='
         simple-exp     -> term simple-exp'
         simple-exp'    -> add-op term simple-exp' | ε
@@ -80,7 +82,6 @@ public class TinyLL1Parser {
         mul-op         -> '*' | '/'
         factor         -> '(' exp ')' | number | identifier
      */
-
 
     // production rules
     private final List<Production> ps = new ArrayList<>();
@@ -156,7 +157,7 @@ public class TinyLL1Parser {
     }
 
     public ParseTree<Token> parse(final List<Token> input) {
-        // the scanner provides tokens for comments and eof.  these are not part of the grammar
+        // the scanner provides tokens for comments and eof. these are not part of the grammar
         final List<Token> in = input.stream()
                 .filter(t -> t.type != Token.Type.COMMENT)
                 .filter(t -> t.type != Token.Type.END_OF_FILE)
@@ -168,10 +169,14 @@ public class TinyLL1Parser {
             throw new RuntimeException(errorReport(errors));
         });
 
-        return result.getRight().get();
+        final ParseTree<Token> tree = result.getRight().get();
+
+        System.out.println(toSyntaxTree(tree));
+
+        return tree;
     }
 
-    private String errorReport(List<Token> errors) {
+    private String errorReport(final List<Token> errors) {
         final StringBuilder sb = new StringBuilder();
         for (final Token t : errors) {
             sb.append("\n");
@@ -182,5 +187,149 @@ public class TinyLL1Parser {
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    private Ast toSyntaxTree(final ParseTree<Token> parseTree) {
+        switch (parseTree.getSymbol().toString()) {
+            case "program": return program(parseTree);
+            case "stmt-sequence": return stmtSequence(parseTree);
+            case "statement":  return statement(parseTree);
+            case "if-stmt": return ifStmt(parseTree);
+            case "repeat-stmt": return readStmt(parseTree);
+            case "assign-stmt": return assignStmt(parseTree);
+            case "read-stmt": return readStmt(parseTree);
+            case "write-stmt": return writeStmt(parseTree);
+            case "exp": return exp(parseTree);
+            case "simple-exp": return simpleExp(parseTree);
+            case "term": return term(parseTree);
+            case "factor": return factor(parseTree);
+            case "number": return number(parseTree);
+            case "identifier": return identifier(parseTree);
+            default:
+                throw new IllegalStateException("should not reach here");
+        }
+    }
+
+    // program -> stmt-sequence
+    private Ast program(final ParseTree<Token> parseTree) {
+        return toSyntaxTree(parseTree.getChildren().get(0));
+    }
+
+    // stmt-sequence -> statement stmt-sequence'
+    // stmt-sequence' -> ';' statement stmt-sequence' | ε
+    private Ast stmtSequence(final ParseTree<Token> parseTree) {
+        final List<Ast> stmts = new LinkedList<>();
+        List<ParseTree<Token>> children = parseTree.getChildren();
+        stmts.add(toSyntaxTree(children.get(0)));
+        children = children.get(1).getChildren();
+        while (!children.isEmpty()) {
+            stmts.add(toSyntaxTree(children.get(1)));
+            children = children.get(2).getChildren();
+        }
+        return new Ast.Statements(stmts);
+    }
+
+    // statement -> if-stmt | read-stmt | write-stmt | assign-stmt | repeat-stmt
+    private Ast statement(final ParseTree<Token> parseTree) {
+        return toSyntaxTree(parseTree.getChildren().get(0));
+    }
+
+    // if-stmt -> 'if' exp 'then' stmt-sequence else-part
+    // else-part -> 'end' | 'else' stmt-sequence 'end'
+    private Ast ifStmt(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        final Ast exp = toSyntaxTree(children.get(1));
+        final Ast then = toSyntaxTree(children.get(3));
+        final ParseTree<Token> elsePart = children.get(4);
+        return elsePart.getChildren().size() == 3
+            ? new Ast.IfThenElse(exp, then, toSyntaxTree(elsePart.getChildren().get(1)))
+            : new Ast.IfThen(exp, then);
+    }
+
+    // repeat-stmt -> 'repeat' stmt-sequence 'until' exp
+    private Ast repeatStmt(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        return new Ast.Repeat(toSyntaxTree(children.get(1)), toSyntaxTree(children.get(3)));
+    }
+
+    // assign-stmt -> identifier ':=' exp
+    private Ast assignStmt(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        return new Ast.Assign(toSyntaxTree(children.get(0)), toSyntaxTree(children.get(2)));
+    }
+
+    // read-stmt -> 'read' identifier
+    private Ast readStmt(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        return new Ast.Read(toSyntaxTree(children.get(1)));
+    }
+
+    // write-stmt -> 'write' exp
+    private Ast writeStmt(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        return new Ast.Write(toSyntaxTree(children.get(1)));
+    }
+
+    // exp -> simple-exp exp'
+    private Ast exp(final ParseTree<Token> parseTree) {
+        List<ParseTree<Token>> children = parseTree.getChildren();
+        final Ast left = toSyntaxTree(children.get(0));
+        children = children.get(1).getChildren();
+        if (children.isEmpty()) { return left; }
+        final Ast right = toSyntaxTree(children.get(1));
+        final Symbol op = children.get(0).getChildren().get(0).getSymbol();
+        if (op.equals(lt)) { return new Ast.LessThan(left, right); }
+        if (op.equals(eq)) { return new Ast.Equals(left, right); }
+        throw new IllegalStateException();
+    }
+
+    // simple-exp -> term simple-exp'
+    // simple-exp' -> add-op term simple-exp' | ε
+    private Ast simpleExp(final ParseTree<Token> parseTree) {
+        List<ParseTree<Token>> children = parseTree.getChildren();
+        Ast result = toSyntaxTree(children.get(0));
+        children = children.get(1).getChildren();
+        while (!children.isEmpty()) {
+            final Ast term = toSyntaxTree(children.get(1));
+            final Symbol op = children.get(0).getChildren().get(0).getSymbol();
+            if (op.equals(plus)) { result = new Ast.Plus(result, term); }
+            else if (op.equals(minus)) { result = new Ast.Minus(result, term); }
+            else { throw new IllegalStateException(); }
+            children = children.get(2).getChildren();
+        }
+        return result;
+    }
+
+    // term -> factor term'
+    // term' -> mul-op factor term' | ε
+    private Ast term(final ParseTree<Token> parseTree) {
+        List<ParseTree<Token>> children = parseTree.getChildren();
+        Ast result = toSyntaxTree(children.get(0));
+        children = children.get(1).getChildren();
+        while (!children.isEmpty()) {
+            final Ast factor = toSyntaxTree(children.get(1));
+            final Symbol op = children.get(0).getChildren().get(0).getSymbol();
+            if (op.equals(times)) { result = new Ast.Times(result, factor); }
+            else if (op.equals(div)) { result = new Ast.Div(result, factor); }
+            else { throw new IllegalStateException(); }
+            children = children.get(2).getChildren();
+        }
+        return result;
+    }
+
+    // factor -> '(' exp ')' | number | identifier
+    private Ast factor(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        return children.size() == 3 ? toSyntaxTree(children.get(1)) : toSyntaxTree(children.get(0));
+    }
+
+    private Ast number(final ParseTree<Token> parseTree) {
+        final Token t = parseTree.getT();
+        return new Ast.Num(((Token.Num)t).getValue());
+    }
+
+    private Ast identifier(final ParseTree<Token> parseTree) {
+        final Token t = parseTree.getT();
+        return new Ast.Id(((Token.Identifier)t).getValue());
     }
 }

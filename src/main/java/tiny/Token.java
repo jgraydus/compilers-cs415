@@ -10,10 +10,12 @@ public class Token {
     protected final Source<Character> src;
     protected final Type type;
 
-    private Token(Source<Character> src, Type type) {
+    private Token(final Source<Character> src, final Type type) {
         this.src = src;
         this.type = type;
     }
+
+    public Source<Character> getSrc() { return src; }
 
     public enum Type {
         IF, THEN, ELSE, READ, REPEAT, UNTIL, WRITE, COMMENT, SEMICOLON, END_OF_FILE, EQUAL, PLUS,
@@ -129,7 +131,7 @@ public class Token {
         public int getValue() { return num; }
 
         @Override public String toString() {return this.getClass().getSimpleName() + "[" + num + "]"; }
-        @Override public boolean equals(Object other) { return super.equals(other) && num == ((Num)other).num; }
+        @Override public boolean equals(final Object other) { return super.equals(other) && num == ((Num)other).num; }
     }
 
     @Override public String toString() { return this.getClass().getSimpleName(); }

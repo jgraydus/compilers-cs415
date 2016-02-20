@@ -4,7 +4,7 @@ package parser;
 public abstract class Symbol {
     private final String str;
 
-    protected Symbol(String str) { this.str = str; }
+    protected Symbol(final String str) { this.str = str; }
 
     /** @return true if this symbol represents a terminal in the grammar. false if it represents a nonterminal */
     public abstract boolean isTerminal();
@@ -21,16 +21,16 @@ public abstract class Symbol {
     /** special symbol indicating end of input. added automatically */
     public static final Symbol $ = new Terminal("$");
 
-    @Override final public boolean equals(Object other) { return str.equals(((Symbol)other).str); }
+    @Override final public boolean equals(final Object other) { return str.equals(((Symbol)other).str); }
     @Override final public String toString() { return str; }
 
     public static class Terminal extends Symbol {
-        public Terminal(String str) { super(str); }
+        public Terminal(final String str) { super(str); }
         @Override public boolean isTerminal() { return true; }
     }
 
     public static class NonTerminal extends Symbol {
-        public NonTerminal(String str) { super(str); }
+        public NonTerminal(final String str) { super(str); }
         @Override public boolean isTerminal() { return false; }
     }
 }

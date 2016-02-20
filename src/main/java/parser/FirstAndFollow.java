@@ -12,7 +12,7 @@ public class FirstAndFollow {
     private final Map<Symbol, Set<Symbol>> first = new HashMap<>();
     private final Map<Symbol, Set<Symbol>> follow = new HashMap<>();
 
-    public FirstAndFollow(Grammar g) {
+    public FirstAndFollow(final Grammar g) {
         first(g);  // initialize the first sets
         follow(g); // initialize the follow sets
     }
@@ -158,7 +158,7 @@ public class FirstAndFollow {
     }
 
     /** reverse a list */
-    private <T> List<T> reverse(List<T> ts) {
+    private <T> List<T> reverse(final List<T> ts) {
         final List<T> l = new ArrayList<>(ts);
         Collections.reverse(l);
         return l;
