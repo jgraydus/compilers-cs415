@@ -4,6 +4,7 @@ package tiny;
 import data.Either;
 import data.Pair;
 import parser.ParseTree;
+import tiny.type.TypeError;
 import token.CharacterSource;
 import token.Source;
 import token.Error;
@@ -12,18 +13,31 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 
 public class Tiny {
+
+    public static void main(String... args) {
+        if (args.length == 0) {
+            System.out.println("provide source file nam");
+            System.exit(1);
+        }
+
+        new Tiny().compile(args[0]);
+    }
+
     private final TinyScanner scanner = new TinyScanner();
     private final TinyLL1Parser parser = new TinyLL1Parser();
+    private final TinyAnalyzer analyzer = new TinyAnalyzer();
 
     public void compile(final String filename) {
         final CharacterSource source = new CharacterSource(readFile(filename));
         final List<Token> tokens = scan(source);
         final Ast ast = parse(tokens);
+        typeCheck(ast);
         // TODO semantic analysis
         // TODO code generation
     }
@@ -46,8 +60,13 @@ public class Tiny {
         return result.getRight().get();
     }
 
+    private void typeCheck(final Ast ast) {
+        final Optional<TypeError> result = analyzer.typeCheck(ast);
+        if (result.isPresent()) { fail(singletonList(result.get().toString())); }
+    }
+
     private <T> T fail(final List<String> messages) {
-        System.err.println("compilation failed.");
+        System.err.println("compilation failed!");
         messages.forEach(System.err::println);
         System.exit(1);
         return null;

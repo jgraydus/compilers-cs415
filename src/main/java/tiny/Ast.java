@@ -2,15 +2,30 @@
 package tiny;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
+import static java.util.Collections.unmodifiableList;
 
 public abstract class Ast {
     private final Optional<Token> token;
+    private final Map<Class,Object> attributes = new HashMap<>();
     
     private Ast(final Token token) {
         this.token = Optional.ofNullable(token);
     }
+
+    public void addAttribute(final Class key, final Object attribute) {
+        attributes.put(key, attribute);
+    }
+
+    public <T> Optional<T> getAttribute(final Class<T> key) {
+        return Optional.ofNullable((T) attributes.get(key));
+    }
+
+    public Optional<Token> getToken() { return token; }
 
     public static class Statements extends Ast {
         private final List<Ast> children;
@@ -19,6 +34,8 @@ public abstract class Ast {
             super(token);
             this.children = children;
         }
+
+        public List<Ast> getChildren() { return unmodifiableList(children); }
     }
 
     public static class IfThen extends Ast {
@@ -30,6 +47,8 @@ public abstract class Ast {
             this.ifPart = ifPart;
             this.thenPart = thenPart;
         }
+
+        public Ast getIfPart() { return ifPart; }
     }
 
     public static class IfThenElse extends Ast {
@@ -43,6 +62,8 @@ public abstract class Ast {
             this.thenPart = thenPart;
             this.elsePart = elsePart;
         }
+
+        public Ast getIfPart() { return ifPart; }
     }
 
     public static class Repeat extends Ast {
@@ -54,6 +75,8 @@ public abstract class Ast {
             this.body = body;
             this.exp = exp;
         }
+
+        public Ast getExp() { return exp; }
     }
 
     public static class Assign extends Ast {
@@ -65,6 +88,8 @@ public abstract class Ast {
             this.identifier = identifier;
             this.exp = exp;
         }
+
+        public Ast getExp() { return exp; }
     }
 
     public static class Read extends Ast {
@@ -77,12 +102,14 @@ public abstract class Ast {
     }
 
     public static class Write extends Ast {
-        private final Ast identifier;
+        private final Ast exp;
 
-        public Write(final Token token, final Ast identifier) {
+        public Write(final Token token, final Ast exp) {
             super(token);
-            this.identifier = identifier;
+            this.exp = exp;
         }
+
+        public Ast getExp() { return exp; }
     }
 
     public static class LessThan extends Ast {
@@ -94,6 +121,9 @@ public abstract class Ast {
             this.left = left;
             this.right = right;
         }
+
+        public Ast getLeft() { return left; }
+        public Ast getRight() { return right; }
     }
 
     public static class Equals extends Ast {
@@ -105,6 +135,9 @@ public abstract class Ast {
             this.left = left;
             this.right = right;
         }
+
+        public Ast getLeft() { return left; }
+        public Ast getRight() { return right; }
     }
 
     public static class Plus extends Ast {
@@ -116,6 +149,9 @@ public abstract class Ast {
             this.left = left;
             this.right = right;
         }
+
+        public Ast getLeft() { return left; }
+        public Ast getRight() { return right; }
     }
 
     public static class Minus extends Ast {
@@ -127,6 +163,9 @@ public abstract class Ast {
             this.left = left;
             this.right = right;
         }
+
+        public Ast getLeft() { return left; }
+        public Ast getRight() { return right; }
     }
 
     public static class Times extends Ast {
@@ -138,6 +177,9 @@ public abstract class Ast {
             this.left = left;
             this.right = right;
         }
+
+        public Ast getLeft() { return left; }
+        public Ast getRight() { return right; }
     }
 
     public static class Div extends Ast {
@@ -149,6 +191,9 @@ public abstract class Ast {
             this.left = left;
             this.right = right;
         }
+
+        public Ast getLeft() { return left; }
+        public Ast getRight() { return right; }
     }
 
     public static class Num extends Ast {
