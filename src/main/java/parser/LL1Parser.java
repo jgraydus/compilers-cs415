@@ -75,7 +75,7 @@ public class LL1Parser<T> {
         return errors.isEmpty() ? right(result) : left(errors);
     }
 
-    public ParseTree<T> parse(final Iterator<T> iter, final List<T> errors) {
+    private ParseTree<T> parse(final Iterator<T> iter, final List<T> errors) {
         // start with a parse stack containing a root node for the start symbol
         final Stack<ParseTree<T>> parseStack = new Stack<>();
         final ParseTree<T> root = new ParseTree<>(start, null);

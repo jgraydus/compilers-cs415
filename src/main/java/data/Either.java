@@ -12,7 +12,7 @@ public class Either<L,R> {
     private final Optional<R> r;
 
     private Either(final L l, final R r) {
-        if (l == null && r == null) throw new IllegalArgumentException("null values not permitted");
+        if (l == null && r == null) { throw new IllegalArgumentException("null values are not permitted"); }
         this.l = Optional.ofNullable(l);
         this.r = Optional.ofNullable(r);
     }

@@ -10,7 +10,7 @@ package token;
 public class Error<A> {
     private final Source<A> src;
 
-    public Error(Source<A> src) { this.src = src; }
+    public Error(final Source<A> src) { this.src = src; }
 
     public Source<A> getSource() { return src; }
 }

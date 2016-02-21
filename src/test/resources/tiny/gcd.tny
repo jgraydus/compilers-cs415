@@ -1,0 +1,11 @@
+read x;
+read y;
+repeat
+  if x < y then
+    tmp := x;
+    x := y;
+    y := tmp
+  end;
+  x := x - y
+until x = 0;
+write y

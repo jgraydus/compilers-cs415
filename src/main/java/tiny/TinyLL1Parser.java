@@ -57,9 +57,8 @@ public class TinyLL1Parser {
     private final Symbol right = new Symbol.Terminal(")");
     private final Symbol number = new Symbol.Terminal("number");
 
-    /*
-        LL(1) grammar for TINY.  note left recursion removed from stmt-sequence, exp,
-        simple-exp, and term.  Also, if-stmt was factored into the if part and else part.
+    /*  LL(1) grammar for TINY.  note left recursion removed from stmt-sequence, exp,
+        simple-exp, and term.  Also, if-stmt factored into if part and else part.
 
         program        -> stmt-sequence
         stmt-sequence  -> statement stmt-sequence'
@@ -80,47 +79,45 @@ public class TinyLL1Parser {
         term           -> factor term'
         term'          -> mul-op factor term' | ε
         mul-op         -> '*' | '/'
-        factor         -> '(' exp ')' | number | identifier
-     */
+        factor         -> '(' exp ')' | number | identifier                            */
 
     // production rules
-    private final List<Production> ps = new ArrayList<>();
-    {
-        ps.add(new Production(program, asList(stmtSequence)));
-        ps.add(new Production(stmtSequence, asList(statement, stmtSequence_)));
-        ps.add(new Production(stmtSequence_, asList(semicolon, statement, stmtSequence_)));
-        ps.add(new Production(stmtSequence_, asList(Symbol.ε)));
-        ps.add(new Production(statement, asList(ifStmt)));
-        ps.add(new Production(statement, asList(readStmt)));
-        ps.add(new Production(statement, asList(writeStmt)));
-        ps.add(new Production(statement, asList(assignStmt)));
-        ps.add(new Production(statement, asList(repeatStmt)));
-        ps.add(new Production(ifStmt, asList(ifS, exp, then, stmtSequence, elsePart)));
-        ps.add(new Production(elsePart, asList(end)));
-        ps.add(new Production(elsePart, asList(elseS, stmtSequence, end)));
-        ps.add(new Production(repeatStmt, asList(repeat, stmtSequence, untilS, exp)));
-        ps.add(new Production(assignStmt, asList(identifier, assign, exp)));
-        ps.add(new Production(readStmt, asList(read, identifier)));
-        ps.add(new Production(writeStmt, asList(write, exp)));
-        ps.add(new Production(exp, asList(simpleExp, exp_)));
-        ps.add(new Production(exp_, asList(comparisonOp, simpleExp)));
-        ps.add(new Production(exp_, asList(Symbol.ε)));
-        ps.add(new Production(comparisonOp, asList(lt)));
-        ps.add(new Production(comparisonOp, asList(eq)));
-        ps.add(new Production(simpleExp, asList(term, simpleExp_)));
-        ps.add(new Production(simpleExp_, asList(addOp, term, simpleExp_)));
-        ps.add(new Production(simpleExp_, asList(Symbol.ε)));
-        ps.add(new Production(addOp, asList(plus)));
-        ps.add(new Production(addOp, asList(minus)));
-        ps.add(new Production(term, asList(factor, term_)));
-        ps.add(new Production(term_, asList(mulOp, factor, term_)));
-        ps.add(new Production(term_, asList(Symbol.ε)));
-        ps.add(new Production(mulOp, asList(times)));
-        ps.add(new Production(mulOp, asList(div)));
-        ps.add(new Production(factor, asList(left, exp, right)));
-        ps.add(new Production(factor, asList(number)));
-        ps.add(new Production(factor, asList(identifier)));
-    }
+    private final List<Production> ps = new ArrayList<Production>(){{
+        add(new Production(program, asList(stmtSequence)));
+        add(new Production(stmtSequence, asList(statement, stmtSequence_)));
+        add(new Production(stmtSequence_, asList(semicolon, statement, stmtSequence_)));
+        add(new Production(stmtSequence_, asList(Symbol.ε)));
+        add(new Production(statement, asList(ifStmt)));
+        add(new Production(statement, asList(readStmt)));
+        add(new Production(statement, asList(writeStmt)));
+        add(new Production(statement, asList(assignStmt)));
+        add(new Production(statement, asList(repeatStmt)));
+        add(new Production(ifStmt, asList(ifS, exp, then, stmtSequence, elsePart)));
+        add(new Production(elsePart, asList(end)));
+        add(new Production(elsePart, asList(elseS, stmtSequence, end)));
+        add(new Production(repeatStmt, asList(repeat, stmtSequence, untilS, exp)));
+        add(new Production(assignStmt, asList(identifier, assign, exp)));
+        add(new Production(readStmt, asList(read, identifier)));
+        add(new Production(writeStmt, asList(write, exp)));
+        add(new Production(exp, asList(simpleExp, exp_)));
+        add(new Production(exp_, asList(comparisonOp, simpleExp)));
+        add(new Production(exp_, asList(Symbol.ε)));
+        add(new Production(comparisonOp, asList(lt)));
+        add(new Production(comparisonOp, asList(eq)));
+        add(new Production(simpleExp, asList(term, simpleExp_)));
+        add(new Production(simpleExp_, asList(addOp, term, simpleExp_)));
+        add(new Production(simpleExp_, asList(Symbol.ε)));
+        add(new Production(addOp, asList(plus)));
+        add(new Production(addOp, asList(minus)));
+        add(new Production(term, asList(factor, term_)));
+        add(new Production(term_, asList(mulOp, factor, term_)));
+        add(new Production(term_, asList(Symbol.ε)));
+        add(new Production(mulOp, asList(times)));
+        add(new Production(mulOp, asList(div)));
+        add(new Production(factor, asList(left, exp, right)));
+        add(new Production(factor, asList(number)));
+        add(new Production(factor, asList(identifier)));
+    }};
 
     // associate token types to grammar symbols
     final Function<Token,Symbol> toSymbol = token -> {
@@ -156,7 +153,9 @@ public class TinyLL1Parser {
         parser = new LL1Parser<>(g, toSymbol);
     }
 
-    public ParseTree<Token> parse(final List<Token> input) {
+    /** @return if an error occurs, a String describing the problem. otherwise, an abstract syntax tree
+     *  for the given input */
+    public Either<String,Ast> parse(final List<Token> input) {
         // the scanner provides tokens for comments and eof. these are not part of the grammar
         final List<Token> in = input.stream()
                 .filter(t -> t.type != Token.Type.COMMENT)
@@ -165,17 +164,25 @@ public class TinyLL1Parser {
 
         final Either<List<Token>,ParseTree<Token>> result = parser.parse(in);
 
-        result.getLeft().ifPresent(errors -> {
-            throw new RuntimeException(errorReport(errors));
-        });
+        if (result.getLeft().isPresent()) {
+            // errors occurred during parsing
+            return Either.left(errorReport(result.getLeft().get()));
+        }
 
         final ParseTree<Token> tree = result.getRight().get();
 
-        System.out.println(toSyntaxTree(tree));
-
-        return tree;
+        try {
+            return Either.right(toSyntaxTree(tree));
+        } catch (final TinyParseException e) {
+            // an error occurred while building the ast
+            final Token t = e.getToken();
+            final String msg = t == null || t.getSrc() == null ? "unknown" : t.getSrc().toString();
+            return Either.left(msg);
+        }
     }
 
+    /* 'errors' is a list of tokens at which errors occurred.  returns a single formatted String
+     * which describes the errors */
     private String errorReport(final List<Token> errors) {
         final StringBuilder sb = new StringBuilder();
         for (final Token t : errors) {
@@ -189,13 +196,14 @@ public class TinyLL1Parser {
         return sb.toString();
     }
 
+    /* builds an abstract syntax tree from a full parse tree */
     private Ast toSyntaxTree(final ParseTree<Token> parseTree) {
         switch (parseTree.getSymbol().toString()) {
             case "program": return program(parseTree);
             case "stmt-sequence": return stmtSequence(parseTree);
             case "statement":  return statement(parseTree);
             case "if-stmt": return ifStmt(parseTree);
-            case "repeat-stmt": return readStmt(parseTree);
+            case "repeat-stmt": return repeatStmt(parseTree);
             case "assign-stmt": return assignStmt(parseTree);
             case "read-stmt": return readStmt(parseTree);
             case "write-stmt": return writeStmt(parseTree);
@@ -226,7 +234,7 @@ public class TinyLL1Parser {
             stmts.add(toSyntaxTree(children.get(1)));
             children = children.get(2).getChildren();
         }
-        return new Ast.Statements(stmts);
+        return new Ast.Statements(null, stmts);
     }
 
     // statement -> if-stmt | read-stmt | write-stmt | assign-stmt | repeat-stmt
@@ -241,33 +249,38 @@ public class TinyLL1Parser {
         final Ast exp = toSyntaxTree(children.get(1));
         final Ast then = toSyntaxTree(children.get(3));
         final ParseTree<Token> elsePart = children.get(4);
+        final Token t = children.get(0).getT();
         return elsePart.getChildren().size() == 3
-            ? new Ast.IfThenElse(exp, then, toSyntaxTree(elsePart.getChildren().get(1)))
-            : new Ast.IfThen(exp, then);
+            ? new Ast.IfThenElse(t, exp, then, toSyntaxTree(elsePart.getChildren().get(1)))
+            : new Ast.IfThen(t, exp, then);
     }
 
     // repeat-stmt -> 'repeat' stmt-sequence 'until' exp
     private Ast repeatStmt(final ParseTree<Token> parseTree) {
         final List<ParseTree<Token>> children = parseTree.getChildren();
-        return new Ast.Repeat(toSyntaxTree(children.get(1)), toSyntaxTree(children.get(3)));
+        final Token t = children.get(0).getT();
+        return new Ast.Repeat(t, toSyntaxTree(children.get(1)), toSyntaxTree(children.get(3)));
     }
 
     // assign-stmt -> identifier ':=' exp
     private Ast assignStmt(final ParseTree<Token> parseTree) {
         final List<ParseTree<Token>> children = parseTree.getChildren();
-        return new Ast.Assign(toSyntaxTree(children.get(0)), toSyntaxTree(children.get(2)));
+        final Token t = children.get(1).getT();
+        return new Ast.Assign(t, toSyntaxTree(children.get(0)), toSyntaxTree(children.get(2)));
     }
 
     // read-stmt -> 'read' identifier
     private Ast readStmt(final ParseTree<Token> parseTree) {
         final List<ParseTree<Token>> children = parseTree.getChildren();
-        return new Ast.Read(toSyntaxTree(children.get(1)));
+        final Token t = children.get(0).getT();
+        return new Ast.Read(t, toSyntaxTree(children.get(1)));
     }
 
     // write-stmt -> 'write' exp
     private Ast writeStmt(final ParseTree<Token> parseTree) {
         final List<ParseTree<Token>> children = parseTree.getChildren();
-        return new Ast.Write(toSyntaxTree(children.get(1)));
+        final Token t = children.get(0).getT();
+        return new Ast.Write(t, toSyntaxTree(children.get(1)));
     }
 
     // exp -> simple-exp exp'
@@ -278,9 +291,10 @@ public class TinyLL1Parser {
         if (children.isEmpty()) { return left; }
         final Ast right = toSyntaxTree(children.get(1));
         final Symbol op = children.get(0).getChildren().get(0).getSymbol();
-        if (op.equals(lt)) { return new Ast.LessThan(left, right); }
-        if (op.equals(eq)) { return new Ast.Equals(left, right); }
-        throw new IllegalStateException();
+        final Token t = children.get(0).getChildren().get(0).getT();
+        if (op.equals(lt)) { return new Ast.LessThan(t,left, right); }
+        if (op.equals(eq)) { return new Ast.Equals(t, left, right); }
+        throw new TinyParseException(t);
     }
 
     // simple-exp -> term simple-exp'
@@ -292,9 +306,10 @@ public class TinyLL1Parser {
         while (!children.isEmpty()) {
             final Ast term = toSyntaxTree(children.get(1));
             final Symbol op = children.get(0).getChildren().get(0).getSymbol();
-            if (op.equals(plus)) { result = new Ast.Plus(result, term); }
-            else if (op.equals(minus)) { result = new Ast.Minus(result, term); }
-            else { throw new IllegalStateException(); }
+            final Token t = children.get(0).getChildren().get(0).getT();
+            if (op.equals(plus)) { result = new Ast.Plus(t, result, term); }
+            else if (op.equals(minus)) { result = new Ast.Minus(t, result, term); }
+            else { throw new TinyParseException(t); }
             children = children.get(2).getChildren();
         }
         return result;
@@ -309,9 +324,10 @@ public class TinyLL1Parser {
         while (!children.isEmpty()) {
             final Ast factor = toSyntaxTree(children.get(1));
             final Symbol op = children.get(0).getChildren().get(0).getSymbol();
-            if (op.equals(times)) { result = new Ast.Times(result, factor); }
-            else if (op.equals(div)) { result = new Ast.Div(result, factor); }
-            else { throw new IllegalStateException(); }
+            final Token t = children.get(0).getChildren().get(0).getT();
+            if (op.equals(times)) { result = new Ast.Times(t, result, factor); }
+            else if (op.equals(div)) { result = new Ast.Div(t, result, factor); }
+            else { throw new TinyParseException(t); }
             children = children.get(2).getChildren();
         }
         return result;
@@ -325,11 +341,11 @@ public class TinyLL1Parser {
 
     private Ast number(final ParseTree<Token> parseTree) {
         final Token t = parseTree.getT();
-        return new Ast.Num(((Token.Num)t).getValue());
+        return new Ast.Num(t, ((Token.Num)t).getValue());
     }
 
     private Ast identifier(final ParseTree<Token> parseTree) {
         final Token t = parseTree.getT();
-        return new Ast.Id(((Token.Identifier)t).getValue());
+        return new Ast.Id(t, ((Token.Identifier)t).getValue());
     }
 }

@@ -3,13 +3,20 @@ package tiny;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Optional;
 
 public abstract class Ast {
+    private final Optional<Token> token;
+    
+    private Ast(final Token token) {
+        this.token = Optional.ofNullable(token);
+    }
 
     public static class Statements extends Ast {
         private final List<Ast> children;
 
-        public Statements(final List<Ast> children) {
+        public Statements(final Token token, final List<Ast> children) {
+            super(token);
             this.children = children;
         }
     }
@@ -18,7 +25,8 @@ public abstract class Ast {
         private final Ast ifPart;
         private final Ast thenPart;
 
-        public IfThen(final Ast ifPart, final Ast thenPart) {
+        public IfThen(final Token token, final Ast ifPart, final Ast thenPart) {
+            super(token);
             this.ifPart = ifPart;
             this.thenPart = thenPart;
         }
@@ -29,7 +37,8 @@ public abstract class Ast {
         private final Ast thenPart;
         private final Ast elsePart;
 
-        public IfThenElse(final Ast ifPart, final Ast thenPart, final Ast elsePart) {
+        public IfThenElse(final Token token, final Ast ifPart, final Ast thenPart, final Ast elsePart) {
+            super(token);
             this.ifPart = ifPart;
             this.thenPart = thenPart;
             this.elsePart = elsePart;
@@ -40,7 +49,8 @@ public abstract class Ast {
         private final Ast body;
         private final Ast exp;
 
-        public Repeat(final Ast body, final Ast exp) {
+        public Repeat(final Token token, final Ast body, final Ast exp) {
+            super(token);
             this.body = body;
             this.exp = exp;
         }
@@ -50,7 +60,8 @@ public abstract class Ast {
         private final Ast identifier;
         private final Ast exp;
 
-        public Assign(final Ast identifier, final Ast exp) {
+        public Assign(final Token token, final Ast identifier, final Ast exp) {
+            super(token);
             this.identifier = identifier;
             this.exp = exp;
         }
@@ -59,7 +70,8 @@ public abstract class Ast {
     public static class Read extends Ast {
         private final Ast identifier;
 
-        public Read(final Ast identifier) {
+        public Read(final Token token, final Ast identifier) {
+            super(token);
             this.identifier = identifier;
         }
     }
@@ -67,7 +79,8 @@ public abstract class Ast {
     public static class Write extends Ast {
         private final Ast identifier;
 
-        public Write(final Ast identifier) {
+        public Write(final Token token, final Ast identifier) {
+            super(token);
             this.identifier = identifier;
         }
     }
@@ -76,7 +89,8 @@ public abstract class Ast {
         private final Ast left;
         private final Ast right;
 
-        public LessThan(final Ast left, final Ast right) {
+        public LessThan(final Token token, final Ast left, final Ast right) {
+            super(token);
             this.left = left;
             this.right = right;
         }
@@ -86,7 +100,8 @@ public abstract class Ast {
         private final Ast left;
         private final Ast right;
 
-        public Equals(final Ast left, final Ast right) {
+        public Equals(final Token token, final Ast left, final Ast right) {
+            super(token);
             this.left = left;
             this.right = right;
         }
@@ -96,7 +111,8 @@ public abstract class Ast {
         private final Ast left;
         private final Ast right;
 
-        public Plus(final Ast left, final Ast right) {
+        public Plus(final Token token, final Ast left, final Ast right) {
+            super(token);
             this.left = left;
             this.right = right;
         }
@@ -106,7 +122,8 @@ public abstract class Ast {
         private final Ast left;
         private final Ast right;
 
-        public Minus(final Ast left, final Ast right) {
+        public Minus(final Token token, final Ast left, final Ast right) {
+            super(token);
             this.left = left;
             this.right = right;
         }
@@ -116,7 +133,8 @@ public abstract class Ast {
         private final Ast left;
         private final Ast right;
 
-        public Times(final Ast left, final Ast right) {
+        public Times(final Token token, final Ast left, final Ast right) {
+            super(token);
             this.left = left;
             this.right = right;
         }
@@ -126,7 +144,8 @@ public abstract class Ast {
         private final Ast left;
         private final Ast right;
 
-        public Div(final Ast left, final Ast right) {
+        public Div(final Token token, final Ast left, final Ast right) {
+            super(token);
             this.left = left;
             this.right = right;
         }
@@ -135,7 +154,8 @@ public abstract class Ast {
     public static class Num extends Ast {
         private final int value;
 
-        public Num(final int value) {
+        public Num(final Token token, final int value) {
+            super(token);
             this.value = value;
         }
     }
@@ -143,7 +163,8 @@ public abstract class Ast {
     public static class Id extends Ast {
         private final String value;
 
-        public Id(final String value) {
+        public Id(final Token token, final String value) {
+            super(token);
             this.value = value;
         }
     }

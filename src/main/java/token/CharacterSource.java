@@ -15,21 +15,22 @@ public class CharacterSource implements Source<Character> {
     private final String src;
     private final int cursor; // this is the position in src of the next character to read
 
-    public CharacterSource(String src) {
+    public CharacterSource(final String src) {
         if (src == null) throw new IllegalArgumentException("the provided source string is null");
         this.src = src;
         this.cursor = 0;
     }
 
-    private CharacterSource(String src, int cursor) {
+    private CharacterSource(final String src, final int cursor) {
         this.src = src;
         this.cursor = cursor;
     }
 
-    /* as this class is immutable, to provide the next character and advance the cursor we just make a new
-     * instance with the cursor incremented by one. the same String reference is used. there are no expensive
-     * substring operations. */
+    /** {@inheritDoc} */
     public Pair<Optional<Character>, Source<Character>> getNext() {
+       /* as this class is immutable, to provide the next character and advance the cursor we just make a new
+          instance with the cursor incremented by one. the same String reference is used. there are no expensive
+          substring operations. */
         return cursor < src.length()
             ? Pair.of(Optional.of(src.charAt(cursor)), new CharacterSource(src, cursor + 1))
             : Pair.of(Optional.empty(), this);

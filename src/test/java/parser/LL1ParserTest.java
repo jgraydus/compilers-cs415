@@ -33,7 +33,7 @@ public class LL1ParserTest {
 
         final LL1Parser ll1 = new LL1Parser(g, toSymbol);
 
-        System.out.println(ll1.parse(sentence));
+        //System.out.println(ll1.parse(sentence));
 
         // TODO verify parse tree
     }
@@ -68,7 +68,7 @@ public class LL1ParserTest {
 
         final LL1Parser ll1 = new LL1Parser(g, toSymbol);
 
-        System.out.println(ll1.parse(sentence));
+        //System.out.println(ll1.parse(sentence));
 
         // TODO verify parse tree
     }
@@ -97,7 +97,7 @@ public class LL1ParserTest {
 
         final LL1Parser ll1 = new LL1Parser(g, toSymbol);
 
-        System.out.println(ll1.parse(sentence).getLeft().get());
+        //System.out.println(ll1.parse(sentence).getLeft().get());
 
         // TODO verify parse tree
     }

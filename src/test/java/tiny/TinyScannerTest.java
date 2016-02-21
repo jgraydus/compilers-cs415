@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.*;
 import static tiny.Token.*;
 
@@ -23,7 +24,7 @@ public class TinyScannerTest {
     static String getTestProgram(final String filename) {
         final BufferedReader reader =
                 new BufferedReader(new InputStreamReader(TinyScannerTest.class.getResourceAsStream(filename)));
-        return String.join( "\n", reader.lines().collect(Collectors.toList()));
+        return String.join( "\n", reader.lines().collect(toList()));
     }
 
     @Test
