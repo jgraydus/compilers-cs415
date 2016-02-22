@@ -49,6 +49,7 @@ public abstract class Ast {
         }
 
         public Ast getIfPart() { return ifPart; }
+        public Ast getThenPart() { return thenPart; }
     }
 
     public static class IfThenElse extends Ast {
@@ -64,6 +65,8 @@ public abstract class Ast {
         }
 
         public Ast getIfPart() { return ifPart; }
+        public Ast getThenPart() { return thenPart; }
+        public Ast getElsePart() { return elsePart; }
     }
 
     public static class Repeat extends Ast {
@@ -76,6 +79,7 @@ public abstract class Ast {
             this.exp = exp;
         }
 
+        public Ast getBody() { return body; }
         public Ast getExp() { return exp; }
     }
 
@@ -89,6 +93,7 @@ public abstract class Ast {
             this.exp = exp;
         }
 
+        public Ast getIdentifier() { return identifier; }
         public Ast getExp() { return exp; }
     }
 
@@ -99,6 +104,8 @@ public abstract class Ast {
             super(token);
             this.identifier = identifier;
         }
+
+        public Ast getIdentifier() { return identifier; }
     }
 
     public static class Write extends Ast {
@@ -203,15 +210,19 @@ public abstract class Ast {
             super(token);
             this.value = value;
         }
+
+        public int getValue() { return value; }
     }
 
     public static class Id extends Ast {
-        private final String value;
+        private final String name;
 
-        public Id(final Token token, final String value) {
+        public Id(final Token token, final String name) {
             super(token);
-            this.value = value;
+            this.name = name;
         }
+
+        public String getName() { return name; }
     }
 
     @Override
@@ -234,7 +245,7 @@ public abstract class Ast {
             }
             else if (this instanceof Id) {
                 sb.append(" [");
-                sb.append(((Id)this).value);
+                sb.append(((Id)this).name);
                 sb.append("]");
             }
             else if (this instanceof Num) {

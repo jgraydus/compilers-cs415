@@ -32,14 +32,14 @@ public class Tiny {
     private final TinyScanner scanner = new TinyScanner();
     private final TinyLL1Parser parser = new TinyLL1Parser();
     private final TinyAnalyzer analyzer = new TinyAnalyzer();
+    private final TinyCodeGen codeGen = new TinyCodeGen();
 
     public void compile(final String filename) {
         final CharacterSource source = new CharacterSource(readFile(filename));
         final List<Token> tokens = scan(source);
         final Ast ast = parse(tokens);
         typeCheck(ast);
-        // TODO semantic analysis
-        // TODO code generation
+        final String tmCode = generateCode(ast);
     }
 
     private String readFile(final String filename) {
@@ -63,6 +63,10 @@ public class Tiny {
     private void typeCheck(final Ast ast) {
         final Optional<TypeError> result = analyzer.typeCheck(ast);
         if (result.isPresent()) { fail(singletonList(result.get().toString())); }
+    }
+
+    private String generateCode(final Ast ast) {
+        return codeGen.generate(ast);
     }
 
     private <T> T fail(final List<String> messages) {
