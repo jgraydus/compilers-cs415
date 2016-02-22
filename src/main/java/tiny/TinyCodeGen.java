@@ -130,7 +130,7 @@ public class TinyCodeGen {
         // first execute the conditional.  the result will be in register 0
         result.addAll(ifPart);
         // if register 0 is false (0), then skip the instruction in the 'then' part
-        result.add(new Jeq(0, thenPart.size(), PCREG));
+        result.add(new Jeq(0, thenPart.size()+1, PCREG));
         // otherwise, continue into the 'then' part
         result.addAll(thenPart);
         return result;
@@ -144,11 +144,11 @@ public class TinyCodeGen {
         // first execute the conditional
         result.addAll(ifPart);
         // if the result is 0 (false), then jump to the else part
-        result.add(new Jeq(0, thenPart.size()+1, PCREG));
+        result.add(new Jeq(0, thenPart.size()+2, PCREG));
         result.addAll(thenPart);
         result.add(new Ldc(0, 1)); //put true in register 0 so we skip the else part
         // if the result was true, jump past the else part
-        result.add(new Jne(0, elsePart.size(), PCREG));
+        result.add(new Jne(0, elsePart.size()+1, PCREG));
         return result;
     }
 
@@ -215,7 +215,7 @@ public class TinyCodeGen {
     private List<Instruction> emit(final Ast.LessThan lessThan, final Map<String,Integer> symbolTable) {
         final List<Instruction> left = emit(lessThan.getLeft(), symbolTable);
         final List<Instruction> right = emit(lessThan.getRight(), symbolTable);
-        final List<Instruction> result = math(left, right, new Sub(0,0,1));
+        final List<Instruction> result = math(left, right, new Sub(0,1,0));
         result.addAll(asList(
                 new Jlt(0, 3, PCREG),
                 new Ldc(0, 0),// false
@@ -228,7 +228,7 @@ public class TinyCodeGen {
     private List<Instruction> emit(final Ast.Equals equals, final Map<String,Integer> symbolTable) {
         final List<Instruction> left = emit(equals.getLeft(), symbolTable);
         final List<Instruction> right = emit(equals.getRight(), symbolTable);
-        final List<Instruction> result = math(left, right, new Sub(0,0,1));
+        final List<Instruction> result = math(left, right, new Sub(0,1,0));
         result.addAll(asList(
                 new Jeq(0, 2, PCREG),
                 new Jne(0, 2, PCREG),
@@ -243,17 +243,17 @@ public class TinyCodeGen {
         final List<Instruction> result = new ArrayList<>();
         result.addAll(asList(
                 new St(PCREG, 0, SPREG), // save the current program counter
-                new Ldc(0, 1),            // increment the stack pointer
-                new Add(SPREG, SPREG, 0)
+                new Ldc(TEMPREG, 1),            // increment the stack pointer
+                new Add(SPREG, SPREG, TEMPREG)
         ));
         result.addAll(statements);
         result.addAll(exp);
         result.addAll(asList(
-                new Jeq(0, 4, PCREG), // if false, stop repeating by jumping past instructions that reset the pc
-                new Ldc(0, 1),            // pop the stack back into the program counter
-                new Sub(SPREG, SPREG, 0),
+                new Jne(0, 4, PCREG), // if true, stop repeating by jumping past instructions that reset the pc
+                new Ldc(TEMPREG, 1),            // pop the stack back into the program counter
+                new Sub(SPREG, SPREG, TEMPREG),
                 new Ld(PCREG, 0, SPREG)
         ));
-        return asList();
+        return result;
     }
 }
