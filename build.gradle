@@ -1,4 +1,4 @@
-group 'junkyard'
+group 'compiler_design'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'

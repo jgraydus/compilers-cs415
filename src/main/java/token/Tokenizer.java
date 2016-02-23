@@ -221,7 +221,7 @@ public interface Tokenizer<T,A> {
         return source -> {
             // run the new tokenizer
             final Either<Error<Character>, Pair<List<Character>, Source<Character>>> result = t.tokenize(source);
-            // and if it succeeds, return a success with the List<Character> replaces by a list containing the string
+            // and if it succeeds, return a success with the List<Character> replaced by a list containing the string
             if (result.getRight().isPresent()) {
                 final Source<Character> src = result.getRight().get().getRight();
                 return right(of(singletonList(str), src));
