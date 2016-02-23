@@ -1,7 +1,6 @@
 /* Joshua Graydus | February 2016 */
 package parser;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -19,21 +18,11 @@ public class ParseTree<T> {
 
     public void setT(final T t) { this.t = t; }
     public T getT() { return t; }
-
-    public Symbol getSymbol() {
-        return s;
-    }
-
+    public Symbol getSymbol() { return s; }
     public List<ParseTree<T>> getChildren() { return unmodifiableList(children); }
+    public void addChild(final ParseTree<T> child) { children.add(child); }
 
-    public void addChild(final ParseTree<T> child) {
-        children.add(child);
-    }
-
-    @Override
-    public String toString() {
-        return string(0);
-    }
+    @Override public String toString() {  return string(0); }
 
     private String string(final int depth) {
         final StringBuilder sb = new StringBuilder();

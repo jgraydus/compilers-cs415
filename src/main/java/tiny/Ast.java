@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import static java.util.Collections.unmodifiableList;
 
+/** defines the node types for the abstract syntax tree of the TINY compiler */
 public abstract class Ast {
     private final Optional<Token> token;
     private final Map<Class,Object> attributes = new HashMap<>();

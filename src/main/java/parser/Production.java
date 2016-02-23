@@ -13,15 +13,8 @@ public class Production {
         this.rhs = rhs;
     }
 
-    public Symbol getLhs() {
-        return lhs;
-    }
+    public Symbol getLhs() { return lhs; }
+    public List<Symbol> getRhs() { return rhs; }
 
-    public List<Symbol> getRhs() {
-        return rhs;
-    }
-
-    @Override public String toString() {
-        return "<" + lhs + " -> " + rhs + ">";
-    }
+    @Override public String toString() { return "<" + lhs + " -> " + rhs + ">"; }
 }

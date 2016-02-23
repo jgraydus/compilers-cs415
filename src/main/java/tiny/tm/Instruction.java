@@ -1,7 +1,7 @@
+/* Joshua Graydus | February 2016 */
 package tiny.tm;
 
-import static java.util.Arrays.asList;
-
+/** the instruction set for the TINY machine */
 public abstract class Instruction {
     private final int arg0;
     private final int arg1;
