@@ -12,7 +12,7 @@ public class LL1ParserTest {
     @Test
     public void test1() {
         /*  S -> b A
-            A -> a A | ε    */
+            A -> a A | epsilon    */
 
         final Symbol S = new Symbol.NonTerminal("S");
         final Symbol A = new Symbol.NonTerminal("A");
@@ -21,7 +21,7 @@ public class LL1ParserTest {
 
         final Production p1 = new Production(S, asList(b, A));
         final Production p2 = new Production(A, asList(a, A));
-        final Production p3 = new Production(A, asList(Symbol.ε));
+        final Production p3 = new Production(A, asList(Symbol.epsilon));
 
         final Symbol start = S;
         final List<Production> ps = asList(p1, p2, p3);
@@ -40,7 +40,7 @@ public class LL1ParserTest {
 
     @Test
     public void test2() {
-        /*  S -> ( S ) S | a | ε */
+        /*  S -> ( S ) S | a | epsilon */
 
         final Symbol S = new Symbol.NonTerminal("S");
         final Symbol left = new Symbol.Terminal("(");
@@ -49,7 +49,7 @@ public class LL1ParserTest {
 
         final Production p1 = new Production(S, asList(left, S, right, S));
         final Production p2 = new Production(S, asList(a));
-        final Production p3 = new Production(S, asList(Symbol.ε));
+        final Production p3 = new Production(S, asList(Symbol.epsilon));
 
         final Symbol start = S;
         final List<Production> ps = asList(p1, p2, p3);
@@ -76,7 +76,7 @@ public class LL1ParserTest {
     @Test
     public void test3() {
         /*  S -> b A
-            A -> a A | ε    */
+            A -> a A | epsilon    */
 
         final Symbol S = new Symbol.NonTerminal("S");
         final Symbol A = new Symbol.NonTerminal("A");
@@ -85,7 +85,7 @@ public class LL1ParserTest {
 
         final Production p1 = new Production(S, asList(b, A));
         final Production p2 = new Production(A, asList(a, A));
-        final Production p3 = new Production(A, asList(Symbol.ε));
+        final Production p3 = new Production(A, asList(Symbol.epsilon));
 
         final Symbol start = S;
         final List<Production> ps = asList(p1, p2, p3);

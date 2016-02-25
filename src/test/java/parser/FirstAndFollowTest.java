@@ -81,7 +81,7 @@ public class FirstAndFollowTest {
 
     /* grammar:
          S -> A b
-         A -> a | ε
+         A -> a | epsilon
     */
     @Test
     public void firstTest5() {
@@ -91,7 +91,7 @@ public class FirstAndFollowTest {
         final Symbol b = new Symbol.Terminal("b");
         final Production p1 = new Production(S, asList(A, b));
         final Production p2 = new Production(A, asList(a));
-        final Production p3 = new Production(A, asList(Symbol.ε));
+        final Production p3 = new Production(A, asList(Symbol.epsilon));
         final Grammar g = new Grammar(S, asList(p1, p2, p3));
         final FirstAndFollow firstAndFollow = new FirstAndFollow(g);
         final Set<Symbol> firstS = firstAndFollow.first(S);
@@ -101,12 +101,12 @@ public class FirstAndFollowTest {
         final Set<Symbol> firstA = firstAndFollow.first(A);
         assertEquals(2, firstA.size());
         assertTrue(firstA.contains(a));
-        assertTrue(firstA.contains(Symbol.ε));
+        assertTrue(firstA.contains(Symbol.epsilon));
     }
 
     /* grammar:
          S -> A B
-         A -> a | ε
+         A -> a | epsilon
          B -> S | b
      */
     @Test
@@ -118,7 +118,7 @@ public class FirstAndFollowTest {
         final Symbol b = new Symbol.Terminal("b");
         final Production p1 = new Production(S, asList(A, B));
         final Production p2 = new Production(A, asList(a));
-        final Production p3 = new Production(A, asList(Symbol.ε));
+        final Production p3 = new Production(A, asList(Symbol.epsilon));
         final Production p4 = new Production(B, asList(S));
         final Production p5 = new Production(B, asList(b));
         final Grammar g = new Grammar(S, asList(p1, p2, p3, p4, p5));
@@ -130,7 +130,7 @@ public class FirstAndFollowTest {
         final Set<Symbol> firstA = firstAndFollow.first(A);
         assertEquals(2, firstA.size());
         assertTrue(firstA.contains(a));
-        assertTrue(firstA.contains(Symbol.ε));
+        assertTrue(firstA.contains(Symbol.epsilon));
         final Set<Symbol> firstB = firstAndFollow.first(B);
         assertEquals(2, firstB.size());
         assertTrue(firstB.contains(a));
@@ -178,9 +178,9 @@ public class FirstAndFollowTest {
 
     /* grammar:
          expr -> term expr'
-         expr' -> + term expr' | - term expr' | ε
+         expr' -> + term expr' | - term expr' | epsilon
          term -> factor term'
-         term' -> * factor term' | / factor term' | ε
+         term' -> * factor term' | / factor term' | epsilon
     */
     @Test
     public void firstTest8() {
@@ -196,11 +196,11 @@ public class FirstAndFollowTest {
         final Production p1 = new Production(expr, asList(term, expr_));
         final Production p2 = new Production(expr_, asList(plus, term, expr_));
         final Production p3 = new Production(expr_, asList(minus, term, expr_));
-        final Production p4 = new Production(expr_, asList(Symbol.ε));
+        final Production p4 = new Production(expr_, asList(Symbol.epsilon));
         final Production p5 = new Production(term, asList(factor, term_));
         final Production p6 = new Production(term_, asList(mult, factor, term_));
         final Production p7 = new Production(term_, asList(div, factor, term_));
-        final Production p8 = new Production(term_, asList(Symbol.ε));
+        final Production p8 = new Production(term_, asList(Symbol.epsilon));
         final Grammar g = new Grammar(expr, asList(p1, p2, p3, p4, p5, p6, p7, p8));
         final FirstAndFollow firstAndFollow = new FirstAndFollow(g);
         assertEquals(1, firstAndFollow.first(expr).size());
@@ -208,20 +208,20 @@ public class FirstAndFollowTest {
         assertEquals(3, firstAndFollow.first(expr_).size());
         assertTrue(firstAndFollow.first(expr_).contains(plus));
         assertTrue(firstAndFollow.first(expr_).contains(minus));
-        assertTrue(firstAndFollow.first(expr_).contains(Symbol.ε));
+        assertTrue(firstAndFollow.first(expr_).contains(Symbol.epsilon));
         assertEquals(1, firstAndFollow.first(term).size());
         assertTrue(firstAndFollow.first(term).contains(factor));
         assertEquals(3, firstAndFollow.first(term_).size());
         assertTrue(firstAndFollow.first(term_).contains(mult));
         assertTrue(firstAndFollow.first(term_).contains(div));
-        assertTrue(firstAndFollow.first(term_).contains(Symbol.ε));
+        assertTrue(firstAndFollow.first(term_).contains(Symbol.epsilon));
     }
 
 
     /* grammar:
          S -> A
-         A -> B | ε
-         B -> C | ε
+         A -> B | epsilon
+         B -> C | epsilon
          C -> A a | B b | c
      */
     @Test
@@ -236,9 +236,9 @@ public class FirstAndFollowTest {
 
         final Production p1 = new Production(S, asList(A));
         final Production p2 = new Production(A, asList(B));
-        final Production p3 = new Production(A, asList(Symbol.ε));
+        final Production p3 = new Production(A, asList(Symbol.epsilon));
         final Production p4 = new Production(B, asList(C));
-        final Production p5 = new Production(B, asList(Symbol.ε));
+        final Production p5 = new Production(B, asList(Symbol.epsilon));
         final Production p6 = new Production(C, asList(A, a));
         final Production p7 = new Production(C, asList(B, b));
         final Production p8 = new Production(C, asList(c));
@@ -250,12 +250,12 @@ public class FirstAndFollowTest {
         assertTrue(firstAndFollow.first(S).contains(a));
         assertTrue(firstAndFollow.first(S).contains(b));
         assertTrue(firstAndFollow.first(S).contains(c));
-        assertTrue(firstAndFollow.first(S).contains(Symbol.ε));
+        assertTrue(firstAndFollow.first(S).contains(Symbol.epsilon));
     }
 
     /* grammar:
          S -> A B
-         A -> a | ε
+         A -> a | epsilon
          B -> S | b
     */
     @Test
@@ -267,7 +267,7 @@ public class FirstAndFollowTest {
         final Symbol b = new Symbol.Terminal("b");
         final Production p1 = new Production(S, asList(A, B));
         final Production p2 = new Production(A, asList(a));
-        final Production p3 = new Production(A, asList(Symbol.ε));
+        final Production p3 = new Production(A, asList(Symbol.epsilon));
         final Production p4 = new Production(B, asList(S));
         final Production p5 = new Production(B, asList(b));
         final Grammar g = new Grammar(S, asList(p1, p2, p3, p4, p5));
@@ -282,9 +282,9 @@ public class FirstAndFollowTest {
 
     /* grammar:
          expr -> term expr'
-         expr' -> + term expr' | - term expr' | ε
+         expr' -> + term expr' | - term expr' | epsilon
          term -> factor term'
-         term' -> * factor term' | / factor term' | ε
+         term' -> * factor term' | / factor term' | epsilon
          factor -> ( expr ) | num | name
     */
     @Test
@@ -305,11 +305,11 @@ public class FirstAndFollowTest {
         final Production p1 = new Production(expr, asList(term, expr_));
         final Production p2 = new Production(expr_, asList(plus, term, expr_));
         final Production p3 = new Production(expr_, asList(minus, term, expr_));
-        final Production p4 = new Production(expr_, asList(Symbol.ε));
+        final Production p4 = new Production(expr_, asList(Symbol.epsilon));
         final Production p5 = new Production(term, asList(factor, term_));
         final Production p6 = new Production(term_, asList(mult, factor, term_));
         final Production p7 = new Production(term_, asList(div, factor, term_));
-        final Production p8 = new Production(term_, asList(Symbol.ε));
+        final Production p8 = new Production(term_, asList(Symbol.epsilon));
         final Production p9 = new Production(factor, asList(left, expr, right));
         final Production p10 = new Production(factor, asList(num));
         final Production p11 = new Production(factor, asList(name));
@@ -337,9 +337,9 @@ public class FirstAndFollowTest {
 
     /* grammar:
          expr -> term expr'
-         expr' -> + term expr' | - term expr' | ε
+         expr' -> + term expr' | - term expr' | epsilon
          term -> factor term'
-         term' -> * factor term' | / factor term' | ε
+         term' -> * factor term' | / factor term' | epsilon
          factor -> ( expr ) | num | name
     */
     @Test
@@ -360,11 +360,11 @@ public class FirstAndFollowTest {
         final Production p1 = new Production(expr, asList(term, expr_));
         final Production p2 = new Production(expr_, asList(plus, term, expr_));
         final Production p3 = new Production(expr_, asList(minus, term, expr_));
-        final Production p4 = new Production(expr_, asList(Symbol.ε));
+        final Production p4 = new Production(expr_, asList(Symbol.epsilon));
         final Production p5 = new Production(term, asList(factor, term_));
         final Production p6 = new Production(term_, asList(mult, factor, term_));
         final Production p7 = new Production(term_, asList(div, factor, term_));
-        final Production p8 = new Production(term_, asList(Symbol.ε));
+        final Production p8 = new Production(term_, asList(Symbol.epsilon));
         final Production p9 = new Production(factor, asList(left, expr, right));
         final Production p10 = new Production(factor, asList(num));
         final Production p11 = new Production(factor, asList(name));
@@ -372,9 +372,9 @@ public class FirstAndFollowTest {
         final FirstAndFollow firstAndFollow = new FirstAndFollow(g);
 
         assertEquals(3, firstAndFollow.first(p4).size());
-        assertTrue(firstAndFollow.first(p4).containsAll(asList(Symbol.ε, Symbol.$, right)));
+        assertTrue(firstAndFollow.first(p4).containsAll(asList(Symbol.epsilon, Symbol.$, right)));
 
         assertEquals(5, firstAndFollow.first(p8).size());
-        assertTrue(firstAndFollow.first(p8).containsAll(asList(Symbol.ε, Symbol.$, plus, minus, right)));
+        assertTrue(firstAndFollow.first(p8).containsAll(asList(Symbol.epsilon, Symbol.$, plus, minus, right)));
     }
 }

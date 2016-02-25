@@ -134,8 +134,8 @@ public class LL1Parser<T> {
                 parseStack.pop();
                 final Stack<ParseTree<T>> tmp = new Stack<>();
                 p.getRhs().stream()
-                        // remove ε. this effectively disregards epsilon productions
-                        .filter(s -> s != Symbol.ε)
+                        // remove epsilon. this effectively disregards epsilon productions
+                        .filter(s -> s != Symbol.epsilon)
                         // create a new ParseTree node for each symbol that is being added
                         .map(s -> new ParseTree<T>(s, null))
                         .forEach(t -> {

@@ -62,7 +62,7 @@ public class TinyLL1Parser {
 
         program        -> stmt-sequence
         stmt-sequence  -> statement stmt-sequence'
-        stmt-sequence' -> ';' statement stmt-sequence' | ε
+        stmt-sequence' -> ';' statement stmt-sequence' | epsilon
         statement      -> if-stmt | read-stmt | write-stmt | assign-stmt | repeat-stmt
         if-stmt        -> 'if' exp 'then' stmt-sequence else-part
         else-part      -> 'end' | 'else' stmt-sequence 'end'
@@ -71,13 +71,13 @@ public class TinyLL1Parser {
         read-stmt      -> 'read' identifier
         write-stmt     -> 'write' exp
         exp            -> simple-exp exp'
-        exp'           -> comparison-op simple-exp | ε
+        exp'           -> comparison-op simple-exp | epsilon
         comparison-op  -> '<' | '='
         simple-exp     -> term simple-exp'
-        simple-exp'    -> add-op term simple-exp' | ε
+        simple-exp'    -> add-op term simple-exp' | epsilon
         add-op         -> '+' | '-'
         term           -> factor term'
-        term'          -> mul-op factor term' | ε
+        term'          -> mul-op factor term' | epsilon
         mul-op         -> '*' | '/'
         factor         -> '(' exp ')' | number | identifier                            */
 
@@ -86,7 +86,7 @@ public class TinyLL1Parser {
         add(new Production(program, asList(stmtSequence)));
         add(new Production(stmtSequence, asList(statement, stmtSequence_)));
         add(new Production(stmtSequence_, asList(semicolon, statement, stmtSequence_)));
-        add(new Production(stmtSequence_, asList(Symbol.ε)));
+        add(new Production(stmtSequence_, asList(Symbol.epsilon)));
         add(new Production(statement, asList(ifStmt)));
         add(new Production(statement, asList(readStmt)));
         add(new Production(statement, asList(writeStmt)));
@@ -101,17 +101,17 @@ public class TinyLL1Parser {
         add(new Production(writeStmt, asList(write, exp)));
         add(new Production(exp, asList(simpleExp, exp_)));
         add(new Production(exp_, asList(comparisonOp, simpleExp)));
-        add(new Production(exp_, asList(Symbol.ε)));
+        add(new Production(exp_, asList(Symbol.epsilon)));
         add(new Production(comparisonOp, asList(lt)));
         add(new Production(comparisonOp, asList(eq)));
         add(new Production(simpleExp, asList(term, simpleExp_)));
         add(new Production(simpleExp_, asList(addOp, term, simpleExp_)));
-        add(new Production(simpleExp_, asList(Symbol.ε)));
+        add(new Production(simpleExp_, asList(Symbol.epsilon)));
         add(new Production(addOp, asList(plus)));
         add(new Production(addOp, asList(minus)));
         add(new Production(term, asList(factor, term_)));
         add(new Production(term_, asList(mulOp, factor, term_)));
-        add(new Production(term_, asList(Symbol.ε)));
+        add(new Production(term_, asList(Symbol.epsilon)));
         add(new Production(mulOp, asList(times)));
         add(new Production(mulOp, asList(div)));
         add(new Production(factor, asList(left, exp, right)));
@@ -224,7 +224,7 @@ public class TinyLL1Parser {
     }
 
     // stmt-sequence -> statement stmt-sequence'
-    // stmt-sequence' -> ';' statement stmt-sequence' | ε
+    // stmt-sequence' -> ';' statement stmt-sequence' | epsilon
     private Ast stmtSequence(final ParseTree<Token> parseTree) {
         final List<Ast> stmts = new LinkedList<>();
         List<ParseTree<Token>> children = parseTree.getChildren();
@@ -298,7 +298,7 @@ public class TinyLL1Parser {
     }
 
     // simple-exp -> term simple-exp'
-    // simple-exp' -> add-op term simple-exp' | ε
+    // simple-exp' -> add-op term simple-exp' | epsilon
     private Ast simpleExp(final ParseTree<Token> parseTree) {
         List<ParseTree<Token>> children = parseTree.getChildren();
         Ast result = toSyntaxTree(children.get(0));
@@ -316,7 +316,7 @@ public class TinyLL1Parser {
     }
 
     // term -> factor term'
-    // term' -> mul-op factor term' | ε
+    // term' -> mul-op factor term' | epsilon
     private Ast term(final ParseTree<Token> parseTree) {
         List<ParseTree<Token>> children = parseTree.getChildren();
         Ast result = toSyntaxTree(children.get(0));

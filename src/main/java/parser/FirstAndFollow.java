@@ -25,14 +25,14 @@ public class FirstAndFollow {
 
     /**
      * The first set for a production <pre>first(A -> B)</pre> is defined as: <br>
-     * first(B) if first(B) does not contain ε <br>
-     * first(B) U follow(A) if first(B) contains ε
+     * first(B) if first(B) does not contain epsilon <br>
+     * first(B) U follow(A) if first(B) contains epsilon
      * @return <pre>first(A -> B)</pre> */
     public Set<Symbol> first(final Production p) {
         final Set<Symbol> result = new HashSet<>();
         for (final Symbol s : p.getRhs()) {
             result.addAll(first(s));
-            if (!first(s).contains(Symbol.ε)) { return result; }
+            if (!first(s).contains(Symbol.epsilon)) { return result; }
         }
         result.addAll(follow(p.getLhs()));
         return result;
@@ -43,15 +43,15 @@ public class FirstAndFollow {
      * <br>
      * first(x), where x is a grammar symbol, is defined as:<br>
      * <ol>
-     *     <li>if x is a terminal or ε, then first(x) = {x} </li>
+     *     <li>if x is a terminal or epsilon, then first(x) = {x} </li>
      *     <li>if x is a nonterminal, then for each production x -> a_1 ... a_n, first(x)
      *     contains:
      *         <ul>
-     *         <li>first(a_1) - {ε}</li>
-     *         <li>first(a_2) if first(a_1) contains ε</li>
-     *         <li>first(a_3) if first(a_2) contains ε</li>
+     *         <li>first(a_1) - {epsilon}</li>
+     *         <li>first(a_2) if first(a_1) contains epsilon</li>
+     *         <li>first(a_3) if first(a_2) contains epsilon</li>
      *         <li>etc.</li>
-     *         <li>ε if and only if first(a_i) contains ε for all i</li>
+     *         <li>epsilon if and only if first(a_i) contains epsilon for all i</li>
      *         </ul>
      *     </li>
      * </ol>
@@ -72,12 +72,12 @@ public class FirstAndFollow {
                 g.get(nt).forEach(p -> {
                     final Set<Symbol> rhs = new HashSet<>();
                     // for a production A -> a_1 a_2 ... a_n, add first(a_i) to the set of first items until
-                    // some first(a_i) does not contain ε
+                    // some first(a_i) does not contain epsilon
                     for (final Symbol s : p.getRhs()) {
                         final Set<Symbol> fs = first.get(s);
                         rhs.addAll(fs);
-                        if (!fs.contains(Symbol.ε)) {
-                            rhs.remove(Symbol.ε);
+                        if (!fs.contains(Symbol.epsilon)) {
+                            rhs.remove(Symbol.epsilon);
                             break;
                         }
                     }
@@ -98,8 +98,8 @@ public class FirstAndFollow {
      * follow(x), for a grammar symbol x, contains:<br>
      * <ol>
      *     <li>$ if x is the start symbol</li>
-     *     <li>first(b) - {ε} for all productions of the form A -> axb</li>
-     *     <li>follow(A) for all productions of the form A -> axb where first(b) contains ε</li>
+     *     <li>first(b) - {epsilon} for all productions of the form A -> axb</li>
+     *     <li>follow(A) for all productions of the form A -> axb where first(b) contains epsilon</li>
      * </ol>
      */
     private void follow(final Grammar g) {
@@ -132,15 +132,15 @@ public class FirstAndFollow {
                                 // and indicate that another iteration of the main loop is necessary
                                 done[0] = false;
                             }
-                            // if first(b_i) contains ε, then add first(b_i) minus ε to the existing tail set. Since
-                            // b_i can derive ε, everything in follow(b_i) will also be in the follow sets of the
+                            // if first(b_i) contains epsilon, then add first(b_i) minus epsilon to the existing tail set. Since
+                            // b_i can derive epsilon, everything in follow(b_i) will also be in the follow sets of the
                             // preceding b's.
-                            if (first.get(b).contains(Symbol.ε)) {
+                            if (first.get(b).contains(Symbol.epsilon)) {
                                 final Set<Symbol> fb = new HashSet<>(first.get(b));
-                                fb.remove(Symbol.ε);
+                                fb.remove(Symbol.epsilon);
                                 tail.addAll(fb);
                             }
-                            // if first(b_i) does not contain ε, then tail is reset to just contain first(b_i)
+                            // if first(b_i) does not contain epsilon, then tail is reset to just contain first(b_i)
                             else {
                                 tail.clear();
                                 tail.addAll(first.get(b));

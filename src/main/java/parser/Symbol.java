@@ -11,7 +11,7 @@ public abstract class Symbol {
 
     /** special symbol used in production rules to indicate that a nonterminal can simply be removed (i.e. replaced
      * with nothing  */
-    public static final Symbol ε = new Terminal("ε");
+    public static final Symbol epsilon = new Terminal("epsilon");
 
     /* the following special symbols should not be used to specify grammars.  they are added automatically */
 
