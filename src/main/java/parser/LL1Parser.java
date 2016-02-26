@@ -9,47 +9,27 @@ import java.util.function.Function;
 import static data.Either.left;
 import static data.Either.right;
 
-public class LL1Parser<T> {
+public class LL1Parser<T> extends Parser<T> {
 
-    private final Symbol start;
-    private final Map<Symbol,Integer> nonterminals = new HashMap<>();
-    private final Map<Symbol,Integer> terminals = new HashMap<>();
     private final Production[][] table;
-    private final Function<T,Symbol> toSymbol;
-
+    
     /**
      * @param g a grammar
      * @param toSymbol a function that associates each possible input token
      *                 of type T to a Symbol object in the grammar g
      */
     public LL1Parser(final Grammar g, final Function<T,Symbol> toSymbol) {
-        this.toSymbol = toSymbol;
-        start = g.getStart();
+        super(g, toSymbol);
+
+        // generate the parse table
 
         final int height = g.getNonTerminals().size();
         final int width = g.getTerminals().size();
-
-        // could use Map<Symbol, Map<Symbol, Production>> instead
         table = new Production[height][width];
 
-        // assign each nonterminal to a row
-        for (int i=0; i< g.getNonTerminals().size(); i++) {
-            final List<Symbol> nts = new ArrayList<>(g.getNonTerminals());
-            nonterminals.put(nts.get(i), i);
-        }
-
-        // assign each terminal to a column
-        for (int i=0; i< g.getTerminals().size(); i++) {
-            final List<Symbol> nts = new ArrayList<>(g.getTerminals());
-            terminals.put(nts.get(i), i);
-        }
-
-        final FirstAndFollow faf = new FirstAndFollow(g);
-
-        // generate the parse table
         g.getNonTerminals().forEach(nt -> {
             g.get(nt).forEach(p -> {
-                faf.first(p).stream()
+                firstAndFollow.first(p).stream()
                         .filter(Symbol::isTerminal)
                         .forEach(t -> {
                             final int row = nonterminals.get(nt);
@@ -68,7 +48,8 @@ public class LL1Parser<T> {
         });
     }
 
-    /** @return either a list of erroneous tokens or a full parse tree of the input */
+    /** {@inheritDoc} */
+    @Override
     public Either<List<T>, ParseTree<T>> parse(final List<T> tokens) {
         final List<T> errors = new LinkedList<>();
         final ParseTree<T> result = parse(tokens.iterator(), errors);
