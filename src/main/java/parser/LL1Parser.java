@@ -12,7 +12,7 @@ import static data.Either.right;
 public class LL1Parser<T> extends Parser<T> {
 
     private final Production[][] table;
-    
+
     /**
      * @param g a grammar
      * @param toSymbol a function that associates each possible input token

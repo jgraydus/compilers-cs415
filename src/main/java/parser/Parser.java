@@ -18,6 +18,7 @@ public abstract class Parser<T> {
     public Parser(final Grammar g, final Function<T,Symbol> toSymbol) {
         this.toSymbol = toSymbol;
         start = g.getStart();
+        firstAndFollow = new FirstAndFollow(g);
 
         // assign each nonterminal to a row
         final List<Symbol> nts = new ArrayList<>(g.getNonTerminals());
@@ -26,8 +27,6 @@ public abstract class Parser<T> {
         // assign each terminal to a column
         final List<Symbol> ts = new ArrayList<>(g.getTerminals());
         for (int i = 0; i < ts.size(); i++) { terminals.put(ts.get(i), i); }
-
-        firstAndFollow = new FirstAndFollow(g);
     }
 
     /** @return either a list of erroneous tokens or a full parse tree of the input */

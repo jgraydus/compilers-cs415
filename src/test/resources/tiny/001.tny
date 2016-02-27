@@ -1,4 +1,30 @@
+{ read some input }
+{read x;}
+
+{ write it back }
+{write x;}
+
+{ do some arithematic }
+{y := 3 + (4 - x) * 10 / 3;
+write y;}
+
+{ if then }
+{if 0 < 3 then
+  write 1
+end;}
+
+{ if then else }
+{if 3 < 0 then
+  write 0
+else
+  write 1
+end;}
+
+{ repeat }
 read x;
-y := 3 + (4 - x) * 10 / 3;
-{z := x < y;}
-write y
+z := 0;
+repeat
+  z := z + x;
+  x := x - 1
+until x < 1;
+write z
