@@ -6,7 +6,7 @@ import token.Source;
 import java.util.List;
 
 /** The tokens of the TINY language */
-public class Token {
+public abstract class Token {
     protected final Source<Character> src;
     protected final Type type;
 
