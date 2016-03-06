@@ -1,3 +1,4 @@
+/* Joshua Graydus | March 2016 */
 package cmm;
 
 import data.Either;
@@ -27,13 +28,16 @@ public class CmmScanner implements Tokenizer<Token,Character> {
     private final Tokenizer<Token,Character> minus = character('-').convert(Minus::new);
     private final Tokenizer<Token,Character> multiply = character('*').convert(Multiply::new);
     private final Tokenizer<Token,Character> divide = character('/').convert(Divide::new);
-    private final Tokenizer<Token,Character> lessThan = character('<').and(character('=').not().peek()).convert(LessThan::new);
+    private final Tokenizer<Token,Character> lessThan = character('<').and(character('=').not().peek())
+            .convert(LessThan::new);
     private final Tokenizer<Token,Character> lessThanOrEqual = string("<=").convert(LessThanOrEqual::new);
-    private final Tokenizer<Token,Character> greaterThan = character('>').and(character('=').not().peek()).convert(GreaterThan::new);
+    private final Tokenizer<Token,Character> greaterThan = character('>').and(character('=').not().peek())
+            .convert(GreaterThan::new);
     private final Tokenizer<Token,Character> greaterThanOrEqual = string(">=").convert(GreaterThanOrEqual::new);
     private final Tokenizer<Token,Character> equal = string("==").convert(Equal::new);
     private final Tokenizer<Token,Character> notEqual = string("!=").convert(NotEqual::new);
-    private final Tokenizer<Token,Character> assign = character('=').and(character('=').not().peek()).convert(Assign::new);
+    private final Tokenizer<Token,Character> assign = character('=').and(character('=').not().peek())
+            .convert(Assign::new);
     private final Tokenizer<Token,Character> semicolon = character(';').convert(Semicolon::new);
     private final Tokenizer<Token,Character> comma = character(',').convert(Comma::new);
     private final Tokenizer<Token,Character> leftParen = character('(').convert(LeftParen::new);
@@ -56,7 +60,8 @@ public class CmmScanner implements Tokenizer<Token,Character> {
                     .convert(Comment::new);
 
     @Override
-    public Either<Error<Character>, Pair<List<Token>, Source<Character>>> tokenize(Source<Character> source) {
-        return oneOf(whitespace(), comment, keyword, special, identifier, number).many().and(emptySource()).tokenize(source);
+    public Either<Error<Character>, Pair<List<Token>, Source<Character>>> tokenize(final Source<Character> source) {
+        return oneOf(whitespace(), comment, keyword, special, identifier, number)
+                .many().and(emptySource()).tokenize(source);
     }
 }
