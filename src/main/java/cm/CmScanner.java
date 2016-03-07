@@ -1,5 +1,5 @@
 /* Joshua Graydus | March 2016 */
-package cmm;
+package cm;
 
 import data.Either;
 import data.Pair;
@@ -9,10 +9,10 @@ import token.Tokenizer;
 
 import java.util.List;
 
-import static cmm.Token.*;
+import static cm.Token.*;
 import static token.Tokenizer.*;
 
-public class CmmScanner implements Tokenizer<Token,Character> {
+public class CmScanner implements Tokenizer<Token,Character> {
 
     // keywords
     private final Tokenizer<Token,Character> elseT = string("else").and(letter().not().peek()).convert(Else::new);

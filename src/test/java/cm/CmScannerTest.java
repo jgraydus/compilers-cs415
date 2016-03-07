@@ -1,4 +1,4 @@
-package cmm;
+package cm;
 
 import data.Either;
 import data.Pair;
@@ -16,20 +16,20 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.*;
 
-import static cmm.Token.*;
+import static cm.Token.*;
 
-public class CmmScannerTest {
+public class CmScannerTest {
 
     static String getTestProgram(final String filename) {
         final BufferedReader reader =
-                new BufferedReader(new InputStreamReader(CmmScannerTest.class.getResourceAsStream(filename)));
+                new BufferedReader(new InputStreamReader(CmScannerTest.class.getResourceAsStream(filename)));
         return String.join( "\n", reader.lines().collect(toList()));
     }
 
     @Test
     public void test1() {
         final String program = getTestProgram("gcd.cmm");
-        final Either<Error<Character>, Pair<List<Token>, Source<Character>>> result = new CmmScanner()
+        final Either<Error<Character>, Pair<List<Token>, Source<Character>>> result = new CmScanner()
                 .tokenize(new CharacterSource(program));
 
         assertTrue(result.getRight().isPresent());
@@ -117,7 +117,7 @@ public class CmmScannerTest {
     @Test
     public void test2() {
         final String program = getTestProgram("sort.cmm");
-        final Either<Error<Character>, Pair<List<Token>, Source<Character>>> result = new CmmScanner()
+        final Either<Error<Character>, Pair<List<Token>, Source<Character>>> result = new CmScanner()
                 .tokenize(new CharacterSource(program));
         assertTrue(result.getRight().isPresent());
         final List<Token> actual = result.getRight().get().getLeft();
