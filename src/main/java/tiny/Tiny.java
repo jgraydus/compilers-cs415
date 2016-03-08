@@ -50,7 +50,7 @@ public class Tiny {
     private final TinyLL1Parser parser = new TinyLL1Parser();
     private final TinyAnalyzer analyzer = new TinyAnalyzer();
     private final TinyCodeGen codeGen = new TinyCodeGenTM();
-    // private final TinyCodeGen codeGen = new TinyCodeGenLLVM();
+    //private final TinyCodeGen codeGen = new TinyCodeGenLLVM();
 
     public String compile(final String filename) {
         final CharacterSource source = new CharacterSource(readFile(filename));

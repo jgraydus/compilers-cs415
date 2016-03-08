@@ -111,7 +111,7 @@ public class CmScannerTest {
 
         final List<Token> actual = result.getRight().get().getLeft();
         assertEquals(expected, actual);
-        //System.out.println(actual);
+        System.out.println(actual);
     }
 
     @Test

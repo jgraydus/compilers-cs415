@@ -55,7 +55,7 @@ public class CmScanner implements Tokenizer<Token,Character> {
 
     private final Tokenizer<Token,Character> comment =
             character('/').and(character('*')
-                    .and(character('*').and(character('/')).not().atLeast(1))
+                    .and(character('*').and(character('/')).not().many())
                     .and(character('*').and(character('/'))))
                     .convert(Comment::new);
 

@@ -7,7 +7,7 @@ import java.util.List;
 
 import static java.util.stream.Collectors.toList;
 
-/** The tokens of the C-- language */
+/** The tokens of the C- language */
 public abstract class Token {
     protected final Source<Character> src;
     protected final Type type;
@@ -18,11 +18,9 @@ public abstract class Token {
     }
 
     public enum Type {
-        ELSE, IF, INT, RETURN, VOID, WHILE,
-        PLUS, MINUS, MULTIPLY, DIVIDE, LESS_THAN, LESS_THAN_OR_EQUAL, GREATER_THAN, GREATER_THAN_OR_EQUAL,
-        EQUAL, NOT_EQUAL, ASSIGN, SEMICOLON, COMMA, LEFT_PAREN, RIGHT_PAREN, LEFT_BRACKET, RIGHT_BRACKET, LEFT_BRACE,
-        RIGHT_BRACE, COMMENT,
-        ID, NUM
+        ELSE, IF, INT, RETURN, VOID, WHILE, PLUS, MINUS, MULTIPLY, DIVIDE, LESS_THAN, LESS_THAN_OR_EQUAL, GREATER_THAN,
+        GREATER_THAN_OR_EQUAL, EQUAL, NOT_EQUAL, ASSIGN, SEMICOLON, COMMA, LEFT_PAREN, RIGHT_PAREN, LEFT_BRACKET,
+        RIGHT_BRACKET, LEFT_BRACE, RIGHT_BRACE, COMMENT, ID, NUM
     }
 
     public static class Else extends Token {
