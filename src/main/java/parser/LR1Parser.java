@@ -5,6 +5,9 @@ import data.Either;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
+
+import static java.util.Collections.singleton;
 
 // TODO
 public class LR1Parser<T> extends Parser<T> {
@@ -86,6 +89,39 @@ public class LR1Parser<T> extends Parser<T> {
         });
         return closure(result);
     }
+
+    // TODO this doesn't work correctly
+    Map<Set<Lr1Item>,Map<Symbol,Set<Lr1Item>>> canonicalCollection() {
+        final Map<Set<Lr1Item>,Map<Symbol,Set<Lr1Item>>> result = new HashMap<>();
+
+        final Lr1Item initial = new Lr1Item(g.get(Symbol.goal).get(0), 0, Symbol.$);
+        final Set<Lr1Item> cc0 = closure(singleton(initial));
+        final Set<Set<Lr1Item>> cc = new HashSet<>();
+        final Stack<Set<Lr1Item>> todo = new Stack<>();
+        todo.push(cc0);
+
+        while (!todo.isEmpty()) {
+            final Set<Lr1Item> next = todo.pop();
+
+            next.forEach(item -> {
+                final List<Symbol> unseen = item.getSymbolsAfterDot();
+                if (!unseen.isEmpty()) {
+                    final Symbol x = unseen.get(0);
+                    final Set<Lr1Item> temp = goTo(next, x);
+                    if (!cc.contains(temp)) {
+                        cc.add(temp);
+                        todo.push(temp);
+                    }
+                    // record transition from next to temp on x
+                    result.computeIfAbsent(next, c(HashMap::new)).put(x, temp);
+                }
+            });
+        }
+        return result;
+    }
+
+    /* convert a supplier into a function that ignores its argument */
+    private <A,B> Function<A,B> c(final Supplier<B> supplier) { return unused -> supplier.get(); }
 
     static class Lr1Item {
         private final Production production;
