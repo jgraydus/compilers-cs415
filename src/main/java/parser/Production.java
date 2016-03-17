@@ -16,5 +16,16 @@ public class Production {
     public Symbol getLhs() { return lhs; }
     public List<Symbol> getRhs() { return rhs; }
 
-    @Override public String toString() { return "<" + lhs + " -> " + rhs + ">"; }
+    @Override public String toString() { return lhs + " -> " + rhs; }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj instanceof Production) {
+            final Production other = (Production) obj;
+            return lhs.equals(other.lhs) && rhs.equals(other.rhs);
+        }
+        return false;
+    }
+
+    @Override public int hashCode() { return lhs.hashCode() + rhs.hashCode(); }
 }

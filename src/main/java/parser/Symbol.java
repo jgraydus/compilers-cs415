@@ -22,6 +22,7 @@ public abstract class Symbol {
     public static final Symbol $ = new Terminal("$");
 
     @Override final public boolean equals(final Object other) { return str.equals(((Symbol)other).str); }
+    @Override final public int hashCode() { return str.hashCode(); }
     @Override final public String toString() { return str; }
 
     public static class Terminal extends Symbol {
