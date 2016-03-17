@@ -4,3 +4,5 @@ build/*
 gradle*
 gradlew*
 *.iml
+*.ipr
+*.iws

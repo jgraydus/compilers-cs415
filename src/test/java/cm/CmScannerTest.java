@@ -28,7 +28,7 @@ public class CmScannerTest {
 
     @Test
     public void test1() {
-        final String program = getTestProgram("gcd.cmm");
+        final String program = getTestProgram("gcd.cm");
         final Either<Error<Character>, Pair<List<Token>, Source<Character>>> result = new CmScanner()
                 .tokenize(new CharacterSource(program));
 
@@ -111,16 +111,13 @@ public class CmScannerTest {
 
         final List<Token> actual = result.getRight().get().getLeft();
         assertEquals(expected, actual);
-        //System.out.println(actual);
     }
 
     @Test
     public void test2() {
-        final String program = getTestProgram("sort.cmm");
+        final String program = getTestProgram("sort.cm");
         final Either<Error<Character>, Pair<List<Token>, Source<Character>>> result = new CmScanner()
                 .tokenize(new CharacterSource(program));
         assertTrue(result.getRight().isPresent());
-        final List<Token> actual = result.getRight().get().getLeft();
-        //System.out.println(actual);
     }
 }
