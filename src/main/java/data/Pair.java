@@ -16,4 +16,19 @@ public class Pair<L,R> {
     public R getRight() { return r; }
 
     public static <A,B> Pair<A,B> of(final A a, final B b) { return new Pair<>(a,b); }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj instanceof Pair) {
+            final Pair other = (Pair) obj;
+            return l.equals(other.l) && r.equals(other.r);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() { return l.hashCode() + r.hashCode(); }
+
+    @Override
+    public String toString() { return "Pair[" + l + ", " + r + "]"; }
 }

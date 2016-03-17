@@ -2,12 +2,14 @@
 package parser;
 
 import data.Either;
+import data.Pair;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toSet;
 
 // TODO
 public class LR1Parser<T> extends Parser<T> {
@@ -29,13 +31,13 @@ public class LR1Parser<T> extends Parser<T> {
         return null; // TODO
     }
 
-    /* compute the closure of a set of LR1 items  TODO this is terribly inefficient and can definitely be improved */
-    Set<Lr1Item> closure(final Set<Lr1Item> items) {
-        final Set<Lr1Item> result = new HashSet<>();
+    /* compute the closure of a set of LR1 items  TODO make this more efficient */
+    Set<LR1Item> closure(final Set<LR1Item> items) {
+        final Set<LR1Item> result = new HashSet<>();
         // the item itself is in the closure
         result.addAll(items);
         while (true) {
-            final Set<Lr1Item> updates = new HashSet<>();
+            final Set<LR1Item> updates = new HashSet<>();
             // for each of the items in the current set of results
             result.forEach(i -> {
                 // get the sentence after the dot
@@ -53,7 +55,7 @@ public class LR1Parser<T> extends Parser<T> {
                             // and every terminal in the previously computed first set
                             first.forEach(b -> {
                                 // add a new item
-                                updates.add(new Lr1Item(p, 0, b));
+                                updates.add(new LR1Item(p, 0, b));
                             });
                         });
                     }
@@ -79,56 +81,74 @@ public class LR1Parser<T> extends Parser<T> {
         return result;
     }
 
-    Set<Lr1Item> goTo(final Set<Lr1Item> items, final Symbol symbol) {
-        final Set<Lr1Item> result = new HashSet<>();
+    Set<LR1Item> goTo(final Set<LR1Item> items, final Symbol symbol) {
+        final Set<LR1Item> result = new HashSet<>();
         items.forEach(item -> {
             final List<Symbol> unseen = item.getSymbolsAfterDot();
             if (!unseen.isEmpty() && unseen.get(0).equals(symbol)) {
-                result.add(new Lr1Item(item.production, item.dotPosition+1, item.lookAhead));
+                result.add(new LR1Item(item.production, item.dotPosition+1, item.lookAhead));
             }
         });
         return closure(result);
     }
 
-    // TODO this doesn't work correctly
-    Map<Set<Lr1Item>,Map<Symbol,Set<Lr1Item>>> canonicalCollection() {
-        final Map<Set<Lr1Item>,Map<Symbol,Set<Lr1Item>>> result = new HashMap<>();
+    /* this type signature is insane! the method returns a pair of results. the first result
+     * is the canonical collection, a Set<Set<LR1Item>>. the second result is a map from a
+     * Set<LR1Item> and a Symbol to another Set<LR1Item> which gives the transitions between
+     * sets. (each Set<LR1Item> represents a state in the parser's DFA) */
+    Pair<Set<Set<LR1Item>>,Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>>> canonicalCollection() {
+        final Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>> transitions = new HashMap<>();
 
-        final Lr1Item initial = new Lr1Item(g.get(Symbol.goal).get(0), 0, Symbol.$);
-        final Set<Lr1Item> cc0 = closure(singleton(initial));
-        final Set<Set<Lr1Item>> cc = new HashSet<>();
-        final Stack<Set<Lr1Item>> todo = new Stack<>();
-        todo.push(cc0);
+        final LR1Item initial = new LR1Item(new Production(Symbol.goal, singletonList(g.getStart())), 0, Symbol.$);
+        final Set<LR1Item> cc0 = closure(singleton(initial));
 
-        while (!todo.isEmpty()) {
-            final Set<Lr1Item> next = todo.pop();
-
-            next.forEach(item -> {
-                final List<Symbol> unseen = item.getSymbolsAfterDot();
-                if (!unseen.isEmpty()) {
-                    final Symbol x = unseen.get(0);
-                    final Set<Lr1Item> temp = goTo(next, x);
-                    if (!cc.contains(temp)) {
-                        cc.add(temp);
-                        todo.push(temp);
-                    }
-                    // record transition from next to temp on x
-                    result.computeIfAbsent(next, c(HashMap::new)).put(x, temp);
-                }
-            });
+        class CCSet extends HashSet<LR1Item> {
+            boolean processed = false;
+            CCSet(final Set<LR1Item> set) { super(set); }
         }
-        return result;
+
+        final Set<CCSet> cc = new HashSet<>();
+        cc.add(new CCSet(cc0));
+
+        boolean done = false;
+        while (!done) {
+            final Set<CCSet> updates = new HashSet<>();
+            // for unprocessed set in cc
+            for (final CCSet cci : cc) {
+                if (!cci.processed) {
+                    cci.processed = true;
+                    // for each item in the current set
+                    for (final LR1Item item : cci) {
+                        final List<Symbol> unseen = item.getSymbolsAfterDot();
+                        if (!unseen.isEmpty()) {
+                            // if the item is of the form a -> b.xc
+                            final Symbol x = unseen.get(0);
+                            // calculate the goTo set for the item and the symbol x
+                            final CCSet temp = new CCSet(goTo(cci, x));
+                            // if this set isn't already part of cc, then add it to the set of updates
+                            if (!cc.contains(temp)) { updates.add(temp); }
+                            // record the transition from the current cci on the symbol x to this new set
+                            final Pair<Set<LR1Item>,Symbol> pair = Pair.of(cci,x);
+                            transitions.put(pair,temp);
+                        }
+                    }
+                }
+            }
+            // if updates is empty, we're finished
+            if (updates.isEmpty()) { done = true; }
+            // otherwise add all the updates to cc and do another iteration
+            else { cc.addAll(updates); }
+        }
+
+        return Pair.of(cc.stream().collect(toSet()),transitions);
     }
 
-    /* convert a supplier into a function that ignores its argument */
-    private <A,B> Function<A,B> c(final Supplier<B> supplier) { return unused -> supplier.get(); }
-
-    static class Lr1Item {
+    static class LR1Item {
         private final Production production;
         private final int dotPosition;
         private final Symbol lookAhead;
 
-        public Lr1Item(final Production production,
+        public LR1Item(final Production production,
                        final int dotPosition,
                        final Symbol lookAhead) {
             this.production = production;
@@ -146,8 +166,8 @@ public class LR1Parser<T> extends Parser<T> {
 
         @Override
         public boolean equals(final Object obj) {
-            if (obj instanceof Lr1Item) {
-                final Lr1Item other = (Lr1Item) obj;
+            if (obj instanceof LR1Item) {
+                final LR1Item other = (LR1Item) obj;
                 return production.equals(other.production) &&
                         dotPosition == other.dotPosition &&
                         lookAhead.equals(other.lookAhead);
