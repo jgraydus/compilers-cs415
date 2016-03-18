@@ -28,12 +28,54 @@ public class LR1Parser<T> extends Parser<T> {
 
     @Override
     public Either<List<T>,ParseTree<T>> parse(final List<T> tokens) {
-        return null; // TODO
+        final List<T> errors = new LinkedList<>();
+        return Either.right(parse(tokens, errors));
     }
 
     private ParseTree<T> parse(final List<T> tokens, final List<T> errors) {
+        final Stack<ParseTree<T>> parseStack = new Stack<>();
+        final Stack<Integer> stateStack = new Stack<>();
 
-        return null; // TODO
+        stateStack.push(0);
+
+        final Iterator<T> iter = tokens.iterator();
+
+        T token = iter.next();
+        Symbol symbol = toSymbol.apply(token);
+
+        while (true) {
+            final int state = stateStack.peek();
+            final Action action = actionTable.get(Pair.of(state,symbol));
+
+            if (action == null) { throw new IllegalStateException("\nunexpected token " + token.toString()); }
+
+            if (action instanceof Reduce) {
+                final Reduce reduce = (Reduce) action;
+                int size = reduce.production.getRhs().size();
+                final Symbol a = reduce.production.getLhs();
+                final ParseTree<T> t = new ParseTree<>(a, null);
+                for (int i=0; i<size; i++) {
+                    stateStack.pop();
+                    t.addChild(parseStack.pop());
+                }
+                parseStack.push(t);
+                stateStack.push(gotoTable.get(Pair.of(stateStack.peek(), a)));
+                continue;
+            }
+
+            if (action instanceof Shift) {
+                final Shift shift = (Shift) action;
+                parseStack.push(new ParseTree<>(symbol, token));
+                stateStack.push(shift.nextState);
+                token = iter.next();
+                symbol = toSymbol.apply(token);
+                continue;
+            }
+
+            if (action instanceof Accept) { break; }
+        }
+
+        return parseStack.pop();
     }
 
     Pair<Map<Pair<Integer,Symbol>,Action>,Map<Pair<Integer,Symbol>,Integer>> buildParseTables() {

@@ -1,6 +1,7 @@
 package parser;
 
 import data.Pair;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.*;
@@ -221,11 +222,19 @@ public class LR1ParserTest {
         final Map<Pair<Integer,Symbol>,Action> actionTable = tables.getLeft();
         final Map<Pair<Integer,Symbol>,Integer> gotoTable = tables.getRight();
 
-        actionTable.forEach((k,v) -> System.out.println(k + ": " + v));
-        System.out.println();
-        gotoTable.forEach((k,v) -> System.out.println(k + ": " + v));
+        //actionTable.forEach((k,v) -> System.out.println(k + ": " + v));
+        //System.out.println();
+        //gotoTable.forEach((k,v) -> System.out.println(k + ": " + v));
 
         // TODO assert something
         // cci sets are given different numbers. hard to test against expected results
+    }
+
+    @Test
+    public void parse1() {
+        final LR1Parser<String> parser = new LR1Parser<>(g1, toSymbol1);
+        ParseTree<String> tree = parser.parse(asList("(","(",")",")","(",")","(",")","eof")).getRight().get();
+        System.out.println();
+        System.out.println(tree);
     }
 }
