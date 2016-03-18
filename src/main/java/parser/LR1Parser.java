@@ -9,7 +9,6 @@ import java.util.function.Function;
 
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toSet;
 
 // TODO
 public class LR1Parser<T> extends Parser<T> {
@@ -38,17 +37,13 @@ public class LR1Parser<T> extends Parser<T> {
     }
 
     Pair<Map<Pair<Integer,Symbol>,Action>,Map<Pair<Integer,Symbol>,Integer>> buildParseTables() {
-        final Pair<Set<Set<LR1Item>>,Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>>> cc_ = canonicalCollection();
-        final Set<Set<LR1Item>> cc = cc_.getLeft();
+        final Pair<List<Set<LR1Item>>,Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>>> cc_ = canonicalCollection();
+        final List<Set<LR1Item>> cc = cc_.getLeft();
         final Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>> transitions = cc_.getRight();
 
-        // assign each set in cc to a different integer
-        int stateIndex = 0;
+        // explicitly map each cci to its index
         final Map<Set<LR1Item>,Integer> states = new HashMap<>();
-        for (final Set<LR1Item> cci : cc) {
-            states.put(cci, stateIndex);
-            stateIndex++;
-        }
+        for (int i=0; i<cc.size(); i++) { states.put(cc.get(i), i); }
 
         final Map<Pair<Integer,Symbol>,Action> actionTable = new HashMap<>();
         final Map<Pair<Integer,Symbol>,Integer> gotoTable = new HashMap<>();
@@ -165,10 +160,10 @@ public class LR1Parser<T> extends Parser<T> {
     }
 
     /* this type signature is insane! the method returns a pair of results. the first result
-     * is the canonical collection, a Set<Set<LR1Item>>. the second result is a map from a
+     * is the canonical collection, a List<Set<LR1Item>>. the second result is a map from a
      * Set<LR1Item> and a Symbol to another Set<LR1Item> which gives the transitions between
      * sets. (each Set<LR1Item> represents a state in the parser's DFA) */
-    Pair<Set<Set<LR1Item>>,Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>>> canonicalCollection() {
+    Pair<List<Set<LR1Item>>,Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>>> canonicalCollection() {
         final Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>> transitions = new HashMap<>();
 
         final LR1Item initial = new LR1Item(new Production(Symbol.goal, singletonList(g.getStart())), 0, Symbol.$);
@@ -212,7 +207,14 @@ public class LR1Parser<T> extends Parser<T> {
             else { cc.addAll(updates); }
         }
 
-        return Pair.of(cc.stream().collect(toSet()),transitions);
+        // we need to ensure that cc0 is the first set in the list so that it can be identified when
+        // preparing to do a parse
+        final List<Set<LR1Item>> result = new ArrayList<>();
+        result.add(cc0);
+        cc.remove(cc0);
+        cc.forEach(result::add);
+
+        return Pair.of(result,transitions);
     }
 
     static class LR1Item {

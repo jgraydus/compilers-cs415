@@ -204,28 +204,12 @@ public class LR1ParserTest {
     @Test
     public void canonicalCollection1() {
         final LR1Parser<String> parser = new LR1Parser<>(g1, toSymbol1);
-        final Pair<Set<Set<LR1Item>>,Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>>> cc = parser.canonicalCollection();
-
-        /*
-        final HashMap<Set<LR1Item>,String> check = new HashMap<>();
-        check.put(g1CC0, "cc0");
-        check.put(g1CC1, "cc1");
-        check.put(g1CC2, "cc2");
-        check.put(g1CC3, "cc3");
-        check.put(g1CC4, "cc4");
-        check.put(g1CC5, "cc5");
-        check.put(g1CC6, "cc6");
-        check.put(g1CC7, "cc7");
-        check.put(g1CC8, "cc8");
-        check.put(g1CC9, "cc9");
-        check.put(g1CC10, "cc10");
-        check.put(g1CC11, "cc11");
-        */
+        final Pair<List<Set<LR1Item>>,Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>>> cc = parser.canonicalCollection();
 
         final Set<Set<LR1Item>> expectedCC = new HashSet<>(
                 asList(g1CC0, g1CC1, g1CC2, g1CC3, g1CC4, g1CC5, g1CC6, g1CC7, g1CC8, g1CC9, g1CC10, g1CC11)
         );
-        final Set<Set<LR1Item>> actualCC = cc.getLeft();
+        final Set<Set<LR1Item>> actualCC = new HashSet<>(cc.getLeft());
         assertEquals(expectedCC, actualCC);
     }
 
@@ -238,5 +222,10 @@ public class LR1ParserTest {
         final Map<Pair<Integer,Symbol>,Integer> gotoTable = tables.getRight();
 
         actionTable.forEach((k,v) -> System.out.println(k + ": " + v));
+        System.out.println();
+        gotoTable.forEach((k,v) -> System.out.println(k + ": " + v));
+
+        // TODO assert something
+        // cci sets are given different numbers. hard to test against expected results
     }
 }
