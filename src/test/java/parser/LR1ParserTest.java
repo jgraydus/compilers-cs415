@@ -13,6 +13,7 @@ import static org.junit.Assert.assertEquals;
 import static parser.LR1Parser.LR1Item;
 import static parser.Symbol.NonTerminal;
 import static parser.Symbol.Terminal;
+import static parser.LR1Parser.*;
 
 public class LR1ParserTest {
 
@@ -226,5 +227,16 @@ public class LR1ParserTest {
         );
         final Set<Set<LR1Item>> actualCC = cc.getLeft();
         assertEquals(expectedCC, actualCC);
+    }
+
+    @Test
+    public void tables1() {
+        final LR1Parser<String> parser = new LR1Parser<>(g1, toSymbol1);
+
+        final Pair<Map<Pair<Integer,Symbol>,Action>,Map<Pair<Integer,Symbol>,Integer>> tables = parser.buildParseTables();
+        final Map<Pair<Integer,Symbol>,Action> actionTable = tables.getLeft();
+        final Map<Pair<Integer,Symbol>,Integer> gotoTable = tables.getRight();
+
+        actionTable.forEach((k,v) -> System.out.println(k + ": " + v));
     }
 }

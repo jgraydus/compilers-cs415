@@ -16,9 +16,15 @@ public class LR1Parser<T> extends Parser<T> {
 
     private final Grammar g;
 
+    private final Map<Pair<Integer,Symbol>,Action> actionTable;
+    private final Map<Pair<Integer,Symbol>,Integer> gotoTable;
+
     public LR1Parser(final Grammar g, final Function<T,Symbol> toSymbol) {
         super(g, toSymbol);
         this.g = g;
+        final Pair<Map<Pair<Integer,Symbol>,Action>,Map<Pair<Integer,Symbol>,Integer>> tables = buildParseTables();
+        actionTable = tables.getLeft();
+        gotoTable = tables.getRight();
     }
 
     @Override
@@ -30,6 +36,72 @@ public class LR1Parser<T> extends Parser<T> {
 
         return null; // TODO
     }
+
+    Pair<Map<Pair<Integer,Symbol>,Action>,Map<Pair<Integer,Symbol>,Integer>> buildParseTables() {
+        final Pair<Set<Set<LR1Item>>,Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>>> cc_ = canonicalCollection();
+        final Set<Set<LR1Item>> cc = cc_.getLeft();
+        final Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>> transitions = cc_.getRight();
+
+        // assign each set in cc to a different integer
+        int stateIndex = 0;
+        final Map<Set<LR1Item>,Integer> states = new HashMap<>();
+        for (final Set<LR1Item> cci : cc) {
+            states.put(cci, stateIndex);
+            stateIndex++;
+        }
+
+        final Map<Pair<Integer,Symbol>,Action> actionTable = new HashMap<>();
+        final Map<Pair<Integer,Symbol>,Integer> gotoTable = new HashMap<>();
+
+        for (final Set<LR1Item> cci : cc) {
+            final int i = states.get(cci);
+            for (final LR1Item item : cci) {
+                final List<Symbol> unseen = item.getSymbolsAfterDot();
+                if (!unseen.isEmpty() && transitions.get(Pair.of(cci,unseen.get(0))) != null) {
+                    final Symbol c = unseen.get(0);
+                    if (c.isTerminal()) {
+                        final int j = states.get(transitions.get(Pair.of(cci, c)));
+                        actionTable.put(Pair.of(i, c), new Shift(j));
+                    }
+                } else if (isTarget(item)) {
+                    actionTable.put(Pair.of(i,Symbol.$), new Accept());
+                } else if (unseen.isEmpty()) {
+                    final Production p = item.production;
+                    final Symbol a = item.lookAhead;
+                    actionTable.put(Pair.of(i,a), new Reduce(p));
+                } else {
+                    throw new IllegalStateException();
+                }
+            }
+            for (final Symbol n : g.getNonTerminals()) {
+                Optional.ofNullable(states.get(transitions.get(Pair.of(cci,n))))
+                        .ifPresent(j -> gotoTable.put(Pair.of(i,n), j));
+            }
+        }
+
+        return Pair.of(actionTable, gotoTable);
+    }
+
+    boolean isTarget(final LR1Item item) {
+        return item.production.getLhs().equals(Symbol.goal) && item.getLookAhead().equals(Symbol.$);
+    }
+
+    static class Action {}
+
+    static class Accept extends Action {}
+
+    static class Shift extends Action {
+        final int nextState;
+        Shift(final int nextState) { this.nextState = nextState; }
+        @Override public String toString() { return "shift:" + nextState; }
+    }
+
+    static class Reduce extends Action {
+        final Production production;
+        Reduce(final Production production) { this.production = production; }
+        @Override public String toString() { return "reduce:" + production; }
+    }
+
 
     /* compute the closure of a set of LR1 items  TODO make this more efficient */
     Set<LR1Item> closure(final Set<LR1Item> items) {
