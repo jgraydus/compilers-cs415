@@ -3,27 +3,25 @@ package parser;
 
 import data.Either;
 import data.Pair;
+import logging.Logger;
 
 import java.util.*;
 import java.util.function.Function;
 
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
+import static java.util.Collections.*;
+import static java.util.stream.Collectors.toList;
 
 // TODO
 public class LR1Parser<T> extends Parser<T> {
+    private final Logger logger = new Logger();
 
     private final Grammar g;
-
-    private final Map<Pair<Integer,Symbol>,Action> actionTable;
-    private final Map<Pair<Integer,Symbol>,Integer> gotoTable;
+    private final ParseTables tables;
 
     public LR1Parser(final Grammar g, final Function<T,Symbol> toSymbol) {
         super(g, toSymbol);
         this.g = g;
-        final Pair<Map<Pair<Integer,Symbol>,Action>,Map<Pair<Integer,Symbol>,Integer>> tables = buildParseTables();
-        actionTable = tables.getLeft();
-        gotoTable = tables.getRight();
+        tables = buildParseTables();
     }
 
     @Override
@@ -42,24 +40,29 @@ public class LR1Parser<T> extends Parser<T> {
 
         T token = iter.next();
         Symbol symbol = toSymbol.apply(token);
-
         while (true) {
             final int state = stateStack.peek();
-            final Action action = actionTable.get(Pair.of(state,symbol));
+            logger.trace("state=" + state + "| token=" + token + "| symbol=" + symbol);
+
+            final Action action = tables.getAction(state, symbol);
+            logger.trace("    >" + action);
 
             if (action == null) { throw new IllegalStateException("\nunexpected token " + token.toString()); }
 
             if (action instanceof Reduce) {
                 final Reduce reduce = (Reduce) action;
-                int size = reduce.production.getRhs().size();
+                final List<Symbol> production = reduce.production.getRhs().stream()
+                        .filter(s -> !s.equals(Symbol.epsilon)).collect(toList());
                 final Symbol a = reduce.production.getLhs();
+                final int size = production.size();
                 final ParseTree<T> t = new ParseTree<>(a, null);
                 for (int i=0; i<size; i++) {
                     stateStack.pop();
                     t.addChild(parseStack.pop());
                 }
                 parseStack.push(t);
-                stateStack.push(gotoTable.get(Pair.of(stateStack.peek(), a)));
+                stateStack.push(tables.getTransition(stateStack.peek(), a));
+                logger.trace("    >goto " + stateStack.peek());
                 continue;
             }
 
@@ -74,71 +77,143 @@ public class LR1Parser<T> extends Parser<T> {
 
             if (action instanceof Accept) { break; }
         }
-
         return parseStack.pop();
     }
 
-    Pair<Map<Pair<Integer,Symbol>,Action>,Map<Pair<Integer,Symbol>,Integer>> buildParseTables() {
-        final Pair<List<Set<LR1Item>>,Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>>> cc_ = canonicalCollection();
-        final List<Set<LR1Item>> cc = cc_.getLeft();
-        final Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>> transitions = cc_.getRight();
+    ParseTables buildParseTables() {
+        logger.trace("building parse tables");
+        final CanonicalCollection cc = canonicalCollection();
+        final ParseTables tables = new ParseTables();
 
-        // explicitly map each cci to its index
-        final Map<Set<LR1Item>,Integer> states = new HashMap<>();
-        for (int i=0; i<cc.size(); i++) { states.put(cc.get(i), i); }
-
-        final Map<Pair<Integer,Symbol>,Action> actionTable = new HashMap<>();
-        final Map<Pair<Integer,Symbol>,Integer> gotoTable = new HashMap<>();
-
-        for (final Set<LR1Item> cci : cc) {
-            final int i = states.get(cci);
-            for (final LR1Item item : cci) {
+        cc.getSets().forEach((i,cci) -> {
+            logger.trace("canonical collection set #" + i);
+            cci.forEach(item -> {
+                logger.trace("item: " + item);
                 final List<Symbol> unseen = item.getSymbolsAfterDot();
-                if (!unseen.isEmpty() && transitions.get(Pair.of(cci,unseen.get(0))) != null) {
+                if (// if the dot isn't at the end of the production
+                        !unseen.isEmpty() &&
+                        //and this isn't an epsilon production
+                        !unseen.get(0).equals(Symbol.epsilon) &&
+                        // and a transition exists from the current state on the next symbol of the production
+                        cc.getTransitions().containsKey(Pair.of(i,unseen.get(0)))) {
+                    // then add a shift action if the next symbol of the production is a terminal
                     final Symbol c = unseen.get(0);
                     if (c.isTerminal()) {
-                        final int j = states.get(transitions.get(Pair.of(cci, c)));
-                        actionTable.put(Pair.of(i, c), new Shift(j));
+                        final int j = cc.getTransitions().get(Pair.of(i,c));
+                        tables.addAction(i, c, new Shift(j));
+                        logger.trace("adding a shift action from " + i + " to " + j + " on " + c);
                     }
-                } else if (isTarget(item)) {
-                    actionTable.put(Pair.of(i,Symbol.$), new Accept());
-                } else if (unseen.isEmpty()) {
-                    final Production p = item.production;
-                    final Symbol a = item.lookAhead;
-                    actionTable.put(Pair.of(i,a), new Reduce(p));
+                } else if (unseen.isEmpty() && isTarget(item)) {
+                    tables.addAction(i, Symbol.$, new Accept());
+                    logger.trace("adding an accept action for state " + i);
+                } else if ((unseen.isEmpty() || unseen.get(0).equals(Symbol.epsilon))) {
+                    tables.addAction(i, item.lookAhead, new Reduce(item.production));
+                    logger.trace("adding a reduce action from " + i + " using rule " + item.production);
                 } else {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("something went terribly wrong while building parse tables");
                 }
-            }
-            for (final Symbol n : g.getNonTerminals()) {
-                Optional.ofNullable(states.get(transitions.get(Pair.of(cci,n))))
-                        .ifPresent(j -> gotoTable.put(Pair.of(i,n), j));
-            }
-        }
+            });
+            g.getNonTerminals().forEach(nt -> {
+                final Pair<Integer,Symbol> key = Pair.of(i,nt);
+                if (cc.getTransitions().containsKey(key)) {
+                    final int j = cc.getTransitions().get(key);
+                    tables.addTransition(i, nt, j);
+                    logger.trace("adding a goto table entry from " + i + " to " + j + " for reduction to " + nt);
+                } else {
+                    logger.trace("there is no transition from " + i + " on a reduction to " + nt);
+                }
+            });
+        });
 
-        return Pair.of(actionTable, gotoTable);
+        return tables;
     }
 
     boolean isTarget(final LR1Item item) {
         return item.production.getLhs().equals(Symbol.goal) && item.getLookAhead().equals(Symbol.$);
     }
 
+    static class ParseTables {
+        private final Map<Pair<Integer,Symbol>,Action> actionTable = new HashMap<>();
+        private final Map<Pair<Integer,Symbol>,Integer> gotoTable = new HashMap<>();
+
+        void addAction(final int state, final Symbol symbol, final Action action) {
+            final Pair<Integer,Symbol> key = Pair.of(state,symbol);
+            if (actionTable.containsKey(key) && !actionTable.get(key).equals(action)) {
+                final Action other = actionTable.get(key);
+                if ((action instanceof Shift && other instanceof Reduce) ||
+                        (action instanceof Reduce && other instanceof Shift)) {
+                    throw new IllegalStateException("shift-reduce conflict. please modify your grammar.");
+                } else if (action instanceof Reduce && other instanceof Reduce) {
+                    throw new IllegalStateException("reduce-reduce conflict. please modify your grammar.");
+                } else {
+                    throw new IllegalStateException("attempting to replace a shift with a different shift");
+                }
+            } else {
+                actionTable.put(key,action);
+            }
+        }
+
+        Action getAction(final int state, final Symbol symbol) {
+            final Pair<Integer,Symbol> key = Pair.of(state,symbol);
+            if (!actionTable.containsKey(key)) {
+                throw new IllegalStateException("there is no entry in the action table for " + key);
+            }
+            return actionTable.get(key);
+        }
+
+        void addTransition(final int from, final Symbol on, final int to) {
+            final Pair<Integer,Symbol> key = Pair.of(from,on);
+            if (gotoTable.containsKey(key) && !gotoTable.get(key).equals(to)) {
+                throw new IllegalStateException("attempt to replace an existing entry in goto table");
+            } else {
+                gotoTable.put(key,to);
+            }
+        }
+
+        int getTransition(final int state, final Symbol symbol) {
+            final Pair<Integer,Symbol> key = Pair.of(state,symbol);
+            if (!gotoTable.containsKey(key)) {
+                throw new IllegalStateException("there is no entry in the goto table for " + key);
+            }
+            return gotoTable.get(key);
+        }
+    }
+
     static class Action {}
 
-    static class Accept extends Action {}
+    static class Accept extends Action {
+        @Override public String toString() { return "accept"; }
+    }
 
     static class Shift extends Action {
         final int nextState;
         Shift(final int nextState) { this.nextState = nextState; }
         @Override public String toString() { return "shift:" + nextState; }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj instanceof Shift) {
+                final Shift other = (Shift) obj;
+                return nextState == other.nextState;
+            }
+            return false;
+        }
     }
 
     static class Reduce extends Action {
         final Production production;
         Reduce(final Production production) { this.production = production; }
         @Override public String toString() { return "reduce:" + production; }
-    }
 
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj instanceof Reduce) {
+                final Reduce other = (Reduce) obj;
+                return production.equals(other.production);
+            }
+            return false;
+        }
+    }
 
     /* compute the closure of a set of LR1 items  TODO make this more efficient */
     Set<LR1Item> closure(final Set<LR1Item> items) {
@@ -201,62 +276,82 @@ public class LR1Parser<T> extends Parser<T> {
         return closure(result);
     }
 
-    /* this type signature is insane! the method returns a pair of results. the first result
-     * is the canonical collection, a List<Set<LR1Item>>. the second result is a map from a
-     * Set<LR1Item> and a Symbol to another Set<LR1Item> which gives the transitions between
-     * sets. (each Set<LR1Item> represents a state in the parser's DFA) */
-    Pair<List<Set<LR1Item>>,Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>>> canonicalCollection() {
-        final Map<Pair<Set<LR1Item>,Symbol>,Set<LR1Item>> transitions = new HashMap<>();
+    CanonicalCollection canonicalCollection() {
+        final CanonicalCollection cc = new CanonicalCollection();
 
         final LR1Item initial = new LR1Item(new Production(Symbol.goal, singletonList(g.getStart())), 0, Symbol.$);
         final Set<LR1Item> cc0 = closure(singleton(initial));
 
-        class CCSet extends HashSet<LR1Item> {
-            boolean processed = false;
-            CCSet(final Set<LR1Item> set) { super(set); }
-        }
-
-        final Set<CCSet> cc = new HashSet<>();
-        cc.add(new CCSet(cc0));
+        cc.add(cc0);
 
         boolean done = false;
         while (!done) {
-            final Set<CCSet> updates = new HashSet<>();
+            done = true;
             // for unprocessed set in cc
-            for (final CCSet cci : cc) {
-                if (!cci.processed) {
-                    cci.processed = true;
-                    // for each item in the current set
-                    for (final LR1Item item : cci) {
-                        final List<Symbol> unseen = item.getSymbolsAfterDot();
-                        if (!unseen.isEmpty()) {
-                            // if the item is of the form a -> b.xc
-                            final Symbol x = unseen.get(0);
-                            // calculate the goTo set for the item and the symbol x
-                            final CCSet temp = new CCSet(goTo(cci, x));
-                            // if this set isn't already part of cc, then add it to the set of updates
-                            if (!cc.contains(temp)) { updates.add(temp); }
-                            // record the transition from the current cci on the symbol x to this new set
-                            final Pair<Set<LR1Item>,Symbol> pair = Pair.of(cci,x);
-                            transitions.put(pair,temp);
+            for (final Set<LR1Item> cci : cc.getUnprocessed()) {
+                // for each item in the current set
+                for (final LR1Item item : cci) {
+                    final List<Symbol> unseen = item.getSymbolsAfterDot();
+                    if (!unseen.isEmpty()) {
+                        // if the item is of the form a -> b.xc
+                        final Symbol x = unseen.get(0);
+                        // calculate the goTo set for the item and the symbol x
+                        final Set<LR1Item> temp = goTo(cci, x);
+                        // if this set isn't already part of cc, then add it to the set of updates
+                        if (!cc.contains(temp)) {
+                            cc.add(temp);
+                            done = false;
                         }
+                        // record the transition from the current cci on the symbol x to this new set
+                        cc.addTransition(cci, x, temp);
                     }
                 }
             }
-            // if updates is empty, we're finished
-            if (updates.isEmpty()) { done = true; }
-            // otherwise add all the updates to cc and do another iteration
-            else { cc.addAll(updates); }
+        }
+        return cc;
+    }
+
+    static class CanonicalCollection {
+        int nextNumber = 0;
+        final Map<Integer,Set<LR1Item>> intToSet = new TreeMap<>();
+        final Map<Set<LR1Item>,Integer> setToInt = new HashMap<>();
+        final Map<Pair<Integer,Symbol>,Integer> transitions = new HashMap<>();
+        List<Set<LR1Item>> unprocessed = new ArrayList<>();
+
+        boolean contains(final Set<LR1Item> set) {
+            return setToInt.containsKey(set);
         }
 
-        // we need to ensure that cc0 is the first set in the list so that it can be identified when
-        // preparing to do a parse
-        final List<Set<LR1Item>> result = new ArrayList<>();
-        result.add(cc0);
-        cc.remove(cc0);
-        cc.forEach(result::add);
+        Map<Integer,Set<LR1Item>> getSets() { return unmodifiableMap(intToSet); }
+        Map<Pair<Integer,Symbol>,Integer> getTransitions() { return unmodifiableMap(transitions); }
 
-        return Pair.of(result,transitions);
+        Collection<Set<LR1Item>> getUnprocessed() {
+            final Collection<Set<LR1Item>> temp = unprocessed;
+            unprocessed = new ArrayList<>();
+            return temp;
+        }
+
+        void add(final Set<LR1Item> set) {
+            if (setToInt.containsKey(set)) { throw new IllegalStateException("set is already in cc"); }
+            setToInt.put(set,nextNumber);
+            intToSet.put(nextNumber,set);
+            unprocessed.add(set);
+            nextNumber++;
+        }
+
+        void addTransition(final Set<LR1Item> from, final Symbol on, final Set<LR1Item> to) {
+            if (!setToInt.containsKey(from)) { throw new IllegalStateException("not in cc: " + from); }
+            if (!setToInt.containsKey(to)) { throw new IllegalStateException("not in cc: " + to); }
+            final int from_ = setToInt.get(from);
+            final int to_ = setToInt.get(to);
+            final Pair<Integer,Symbol> key = Pair.of(from_,on);
+            if (transitions.containsKey(key)) {
+                final int previous = transitions.get(key);
+                if (previous != to_) { throw new IllegalStateException("attempting to alter an existing transition"); }
+            } else {
+                transitions.put(Pair.of(from_, on), to_);
+            }
+        }
     }
 
     static class LR1Item {

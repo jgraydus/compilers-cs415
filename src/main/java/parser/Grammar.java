@@ -3,10 +3,7 @@ package parser;
 
 import java.util.*;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.unmodifiableList;
-import static java.util.Collections.unmodifiableSet;
-import static java.util.Collections.emptyList;
+import static java.util.Collections.*;
 
 public class Grammar {
     private final Symbol start;
