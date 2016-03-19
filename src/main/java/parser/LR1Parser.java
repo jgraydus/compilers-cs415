@@ -149,9 +149,19 @@ public class LR1Parser<T> extends Parser<T> {
                 final Action other = actionTable.get(key);
                 if ((action instanceof Shift && other instanceof Reduce) ||
                         (action instanceof Reduce && other instanceof Shift)) {
-                    throw new IllegalStateException("shift-reduce conflict. please modify your grammar.");
+                    final String message = "\nshift-reduce conflict!\n" +
+                            "state=" + state + "\n" +
+                            "symbol=" + symbol + "\n" +
+                            "existing action=" + other + "\n" +
+                            "new action=" + action;
+                    throw new IllegalStateException(message);
                 } else if (action instanceof Reduce && other instanceof Reduce) {
-                    throw new IllegalStateException("reduce-reduce conflict. please modify your grammar.");
+                    final String message = "\nreduce-reduce conflict!\n" +
+                            "state=" + state + "\n" +
+                            "symbol=" + symbol + "\n" +
+                            "existing action=" + other + "\n" +
+                            "new action=" + action;
+                    throw new IllegalStateException(message);
                 } else {
                     throw new IllegalStateException("attempting to replace a shift with a different shift");
                 }

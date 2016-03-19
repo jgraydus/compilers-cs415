@@ -20,7 +20,7 @@ public abstract class Token {
     public enum Type {
         ELSE, IF, INT, RETURN, VOID, WHILE, PLUS, MINUS, MULTIPLY, DIVIDE, LESS_THAN, LESS_THAN_OR_EQUAL, GREATER_THAN,
         GREATER_THAN_OR_EQUAL, EQUAL, NOT_EQUAL, ASSIGN, SEMICOLON, COMMA, LEFT_PAREN, RIGHT_PAREN, LEFT_BRACKET,
-        RIGHT_BRACKET, LEFT_BRACE, RIGHT_BRACE, COMMENT, ID, NUM
+        RIGHT_BRACKET, LEFT_BRACE, RIGHT_BRACE, COMMENT, ID, NUM, END_OF_FILE
     }
 
     public static class Else extends Token {
@@ -125,6 +125,10 @@ public abstract class Token {
 
     public static class Comment extends Token {
         public Comment(final Source<Character> src) { super(src, Type.COMMENT); }
+    }
+
+    public static class EndOfFile extends Token {
+        public EndOfFile(final Source<Character> src) { super(src, Type.END_OF_FILE); }
     }
 
     public static class Id extends Token {

@@ -106,7 +106,8 @@ public class CmScannerTest {
                 new RightParen(null),
                 new RightParen(null),
                 new Semicolon(null),
-                new RightBrace(null)
+                new RightBrace(null),
+                new EndOfFile(null)
         );
 
         final List<Token> actual = result.getRight().get().getLeft();

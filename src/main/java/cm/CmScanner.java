@@ -59,9 +59,12 @@ public class CmScanner implements Tokenizer<Token,Character> {
                     .and(character('*').and(character('/'))))
                     .convert(Comment::new);
 
+    private final Tokenizer<Token,Character> endOfFile =
+            Tokenizer.<Object,Character>emptySource().convert(EndOfFile::new);
+
     @Override
     public Either<Error<Character>, Pair<List<Token>, Source<Character>>> tokenize(final Source<Character> source) {
         return oneOf(whitespace(), comment, keyword, special, identifier, number)
-                .many().and(emptySource()).tokenize(source);
+                .many().and(endOfFile).tokenize(source);
     }
 }
