@@ -5,7 +5,6 @@ import data.Either;
 import parser.*;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -183,7 +182,7 @@ public class TinyLR1Parser {
             case "number": return number(parseTree);
             case "identifier": return identifier(parseTree);
             default:
-                throw new IllegalStateException("should not reach here");
+                throw new IllegalStateException("should not reach here\n arg=\n" + parseTree.getSymbol().toString() +"\n" +parseTree);
         }
     }
 
@@ -192,9 +191,13 @@ public class TinyLR1Parser {
         return toSyntaxTree(parseTree.getChildren().get(0));
     }
 
-
+    // stmt-sequence -> stmt-sequence ; statement
+    // stmt-sequence -> statement
     private Ast stmtSequence(final ParseTree<Token> parseTree) {
-        return null; // TODO
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        return children.size() == 1
+                ? new Ast.Statements(null, singletonList(toSyntaxTree(children.get(0))))
+                : new Ast.Statements(null, asList(toSyntaxTree(children.get(0)), toSyntaxTree(children.get(2))));
     }
 
     // statement -> if-stmt | read-stmt | write-stmt | assign-stmt | repeat-stmt
@@ -243,16 +246,46 @@ public class TinyLR1Parser {
         return new Ast.Write(t, toSyntaxTree(children.get(1)));
     }
 
+    // exp -> simple-exp comparison-op simple-exp
+    // exp -> simple-exp
     private Ast exp(final ParseTree<Token> parseTree) {
-        return null; // TODO
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 1) { return toSyntaxTree(children.get(0)); }
+        final Ast left = toSyntaxTree(children.get(0));
+        final Ast right = toSyntaxTree(children.get(2));
+        final Symbol op = children.get(1).getChildren().get(0).getSymbol();
+        final Token t = children.get(1).getChildren().get(0).getT();
+        if (op.equals(lt)) { return new Ast.LessThan(t, left, right); }
+        if (op.equals(eq)) { return new Ast.Equals(t, left, right); }
+        throw new TinyParseException(t);
     }
 
+    // simple-exp -> simple-exp addop term
+    // simple-exp -> term
     private Ast simpleExp(final ParseTree<Token> parseTree) {
-        return null; // TODO
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 1) { return toSyntaxTree(children.get(0)); }
+        final Ast left = toSyntaxTree(children.get(0));
+        final Ast right = toSyntaxTree(children.get(2));
+        final Symbol op = children.get(1).getChildren().get(0).getSymbol();
+        final Token t = children.get(1).getChildren().get(0).getT();
+        if (op.equals(plus)) { return new Ast.Plus(t, left, right); }
+        if (op.equals(minus)) { return new Ast.Minus(t, left, right); }
+        throw new TinyParseException(t);
     }
 
+    // term -> term mulop factor
+    // term -> factor
     private Ast term(final ParseTree<Token> parseTree) {
-        return null; // TODO
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 1) { return toSyntaxTree(children.get(0)); }
+        final Ast left = toSyntaxTree(children.get(0));
+        final Ast right = toSyntaxTree(children.get(2));
+        final Symbol op = children.get(1).getChildren().get(0).getSymbol();
+        final Token t = children.get(1).getChildren().get(0).getT();
+        if (op.equals(times)) { return new Ast.Times(t, left, right); }
+        if (op.equals(div)) { return new Ast.Div(t, left, right); }
+        throw new TinyParseException(t);
     }
 
     // factor -> '(' exp ')' | number | identifier

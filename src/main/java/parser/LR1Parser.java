@@ -27,7 +27,9 @@ public class LR1Parser<T> extends Parser<T> {
     @Override
     public Either<List<T>,ParseTree<T>> parse(final List<T> tokens) {
         final List<T> errors = new LinkedList<>();
-        return Either.right(parse(tokens, errors));
+        final ParseTree<T> result = parse(tokens, errors);
+        if (errors.isEmpty()) { return Either.right(result);
+        } else { return Either.left(errors); }
     }
 
     private ParseTree<T> parse(final List<T> tokens, final List<T> errors) {
@@ -47,7 +49,10 @@ public class LR1Parser<T> extends Parser<T> {
             final Action action = tables.getAction(state, symbol);
             logger.trace("    >" + action);
 
-            if (action == null) { throw new IllegalStateException("\nunexpected token " + token.toString()); }
+            if (action == null) {
+                errors.add(token);
+                return parseStack.pop();
+            }
 
             if (action instanceof Reduce) {
                 final Reduce reduce = (Reduce) action;
@@ -56,10 +61,12 @@ public class LR1Parser<T> extends Parser<T> {
                 final Symbol a = reduce.production.getLhs();
                 final int size = production.size();
                 final ParseTree<T> t = new ParseTree<>(a, null);
+                final Stack<ParseTree<T>> temp = new Stack<>(); // to add the children in the correct order
                 for (int i=0; i<size; i++) {
                     stateStack.pop();
-                    t.addChild(parseStack.pop());
+                    temp.push(parseStack.pop());
                 }
+                for (int i=0; i<size; i++) { t.addChild(temp.pop()); }
                 parseStack.push(t);
                 stateStack.push(tables.getTransition(stateStack.peek(), a));
                 logger.trace("    >goto " + stateStack.peek());
@@ -155,9 +162,6 @@ public class LR1Parser<T> extends Parser<T> {
 
         Action getAction(final int state, final Symbol symbol) {
             final Pair<Integer,Symbol> key = Pair.of(state,symbol);
-            if (!actionTable.containsKey(key)) {
-                throw new IllegalStateException("there is no entry in the action table for " + key);
-            }
             return actionTable.get(key);
         }
 
@@ -253,7 +257,7 @@ public class LR1Parser<T> extends Parser<T> {
     }
 
     /* compute the first set for a string of symbols */
-    Set<Symbol> first(final List<Symbol> symbols) {
+    private Set<Symbol> first(final List<Symbol> symbols) {
         final Set<Symbol> result = new HashSet<>();
         // add the first sets of each individual symbol until a set does not contain epsilon
         for (final Symbol symbol : symbols) {
@@ -392,5 +396,4 @@ public class LR1Parser<T> extends Parser<T> {
         @Override
         public String toString() { return "[" + production + ", " + dotPosition + ", " + lookAhead +"]"; }
     }
-
 }
