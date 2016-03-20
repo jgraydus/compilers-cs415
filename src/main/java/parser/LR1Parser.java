@@ -140,21 +140,21 @@ public class LR1Parser<T> extends Parser<T> {
     }
 
     static class ParseTables {
+        private final Logger logger = new Logger();
         private final Map<Pair<Integer,Symbol>,Action> actionTable = new HashMap<>();
         private final Map<Pair<Integer,Symbol>,Integer> gotoTable = new HashMap<>();
 
         void addAction(final int state, final Symbol symbol, final Action action) {
             final Pair<Integer,Symbol> key = Pair.of(state,symbol);
+            // in order to handle ambiguities such as the dangling else problem, if a shift-reduce conflict occurs,
+            // then the shift action will be kept and the reduce action will be thrown out
             if (actionTable.containsKey(key) && !actionTable.get(key).equals(action)) {
                 final Action other = actionTable.get(key);
-                if ((action instanceof Shift && other instanceof Reduce) ||
-                        (action instanceof Reduce && other instanceof Shift)) {
-                    final String message = "\nshift-reduce conflict!\n" +
-                            "state=" + state + "\n" +
-                            "symbol=" + symbol + "\n" +
-                            "existing action=" + other + "\n" +
-                            "new action=" + action;
-                    throw new IllegalStateException(message);
+                if (action instanceof Shift && other instanceof Reduce) {
+                    logger.debug("shift-reduce conflict -- replacing reduce action with shift action");
+                    actionTable.put(key, action);
+                } else if (action instanceof Reduce && other instanceof Shift) {
+                    logger.debug("shift-reduce conflict -- discarding reduce action in favor of shift action");
                 } else if (action instanceof Reduce && other instanceof Reduce) {
                     final String message = "\nreduce-reduce conflict!\n" +
                             "state=" + state + "\n" +
@@ -162,11 +162,9 @@ public class LR1Parser<T> extends Parser<T> {
                             "existing action=" + other + "\n" +
                             "new action=" + action;
                     throw new IllegalStateException(message);
-                } else {
-                    throw new IllegalStateException("attempting to replace a shift with a different shift");
                 }
             } else {
-                actionTable.put(key,action);
+                actionTable.put(key, action);
             }
         }
 
@@ -229,7 +227,7 @@ public class LR1Parser<T> extends Parser<T> {
         }
     }
 
-    /* compute the closure of a set of LR1 items  TODO make this more efficient */
+    /* compute the closure of a set of LR1 items */
     Set<LR1Item> closure(final Set<LR1Item> items) {
         final Set<LR1Item> result = new HashSet<>();
         // the item itself is in the closure

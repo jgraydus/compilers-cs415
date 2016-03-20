@@ -106,7 +106,7 @@ public class CmParser {
         add(new Production(statement, singletonList(returnStmt)));
         add(new Production(expressionStmt, asList(expression, semicolon)));
         add(new Production(expressionStmt, singletonList(semicolon)));
-        //add(new Production(selectionStmt, asList(ifS, leftParen, expression, rightParen, statement)));
+        add(new Production(selectionStmt, asList(ifS, leftParen, expression, rightParen, statement)));
         add(new Production(selectionStmt, asList(ifS, leftParen, expression, rightParen, statement, elseS, statement)));
         add(new Production(iterationStmt, asList(whileS, leftParen, expression, rightParen, statement)));
         add(new Production(returnStmt, asList(returnS, semicolon)));
@@ -190,7 +190,8 @@ public class CmParser {
                 .collect(toList());
 
         final Either<List<Token>,ParseTree<Token>> result = parser.parse(in);
-System.out.println(result.getRight().get());
+
+        // TODO build AST
         return null;
     }
 }

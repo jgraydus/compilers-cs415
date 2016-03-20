@@ -22,11 +22,22 @@ public class CmParserTest {
     }
 
     @Test
-    public void test() {
+    public void gcd() {
         final String program = getTestProgram("gcd.cm");
         final Either<Error<Character>, Pair<List<Token>, Source<Character>>> result = new CmScanner()
                 .tokenize(new CharacterSource(program));
         final CmParser parser = new CmParser();
         parser.parse(result.getRight().get().getLeft());
+        // TODO assert that AST was created
+    }
+
+    @Test
+    public void sort() {
+        final String program = getTestProgram("sort.cm");
+        final Either<Error<Character>, Pair<List<Token>, Source<Character>>> result = new CmScanner()
+                .tokenize(new CharacterSource(program));
+        final CmParser parser = new CmParser();
+        parser.parse(result.getRight().get().getLeft());
+        // TODO assert that AST was created
     }
 }
