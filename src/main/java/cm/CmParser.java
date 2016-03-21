@@ -3,13 +3,12 @@ package cm;
 
 import data.Either;
 import parser.*;
-import tiny.Ast;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static parser.Symbol.NonTerminal;
@@ -191,7 +190,315 @@ public class CmParser {
 
         final Either<List<Token>,ParseTree<Token>> result = parser.parse(in);
 
-        // TODO build AST
-        return null;
+        // if failed while building parse tree, then return an error message
+        if (result.getLeft().isPresent()) {
+            return Either.left(String.join("\n", result.getLeft().get().stream().map(Token::toString).collect(toList())));
+        }
+
+        // otherwise, convert parse tree to abstract syntax tree
+        return Either.right(toSyntaxTree(result.getRight().get()));
+    }
+
+    // program -> declaration-list
+    private Ast toSyntaxTree(final ParseTree<Token> parseTree) {
+        return new Ast.DeclarationList(declarationList(parseTree.getChildren().get(0)));
+    }
+
+    // declaration-list -> declaration-list declaration | declaration
+    private List<Ast> declarationList(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 1) {
+            final Ast decl = declaration(children.get(0));
+            return new ArrayList<>(singletonList(decl));
+        } else {
+            final List<Ast> decls = declarationList(children.get(0));
+            decls.add(declaration(children.get(1)));
+            return decls;
+        }
+    }
+
+    private Ast.TypeSpecifier typeSpecifier(final ParseTree<Token> parseTree) {
+        final ParseTree<Token> child = parseTree.getChildren().get(0);
+        if (child.getSymbol().equals(intS)) { return Ast.TypeSpecifier.INT; }
+        if (child.getSymbol().equals(voidS)) { return Ast.TypeSpecifier.VOID; }
+        throw new IllegalStateException();
+    }
+
+    // declaration -> var-declaration | fun-declaration
+    private Ast declaration(final ParseTree<Token> parseTree) {
+        final ParseTree<Token> child = parseTree.getChildren().get(0);
+        if (child.getSymbol().equals(varDeclaration)) { return varDeclaration(child); }
+        if (child.getSymbol().equals(funDeclaration)) { return funDeclaration(child); }
+        throw new IllegalStateException();
+    }
+
+    private String id(final ParseTree<Token> parseTree) {
+        return ((Token.Id) parseTree.getT()).getName();
+    }
+
+    private int number(final ParseTree<Token> parseTree) {
+        return ((Token.Num) parseTree.getT()).getValue();
+    }
+
+    // var-declaration -> type-specifier id ; | type-specifier id [ num ] ;
+    private Ast varDeclaration(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        final Ast.TypeSpecifier type = typeSpecifier(children.get(0));
+        final String name = id(children.get(1));
+        final Optional<Integer> size = children.size() == 3
+                ? Optional.empty()
+                : Optional.of(number(children.get(3)));
+        return new Ast.Declaration.VarDeclaration(type, name, size);
+    }
+
+    // fun-declaration -> type-specifier id ( params ) compound-stmt
+    private Ast funDeclaration(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        final Ast.TypeSpecifier type = typeSpecifier(children.get(0));
+        final String name = id(children.get(1));
+        final List<Ast> params = params(children.get(3));
+        final Ast body = compoundStmt(children.get(5));
+        return new Ast.Declaration.FunDeclaration(type, name, params, body);
+    }
+
+    // params -> param-list | void
+    private List<Ast> params(final ParseTree<Token> parseTree) {
+        final ParseTree<Token> child = parseTree.getChildren().get(0);
+        if (voidS.equals(child.getSymbol())) { return emptyList(); }
+        else { return paramList(child); }
+    }
+
+    // param-list -> param-list , param | param
+    private List<Ast> paramList(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 1) {
+            return new ArrayList<>(singletonList(param(children.get(0))));
+        } else {
+            final List<Ast> params = paramList(children.get(0));
+            params.add(param(children.get(2)));
+            return params;
+        }
+    }
+
+    // param -> type-specifier id | type-specifier id [ ]
+    private Ast param(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        final Ast.TypeSpecifier type = typeSpecifier(children.get(0));
+        final String name = id(children.get(1));
+        if (children.size() == 2) { return new Ast.Param(type, name, false); } // not array
+        if (children.size() == 4) { return new Ast.Param(type, name, true); }  // array
+        throw new IllegalStateException();
+    }
+
+    // compound-stmt -> { local-declarations statement-list }
+    private Ast compoundStmt(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        final List<Ast> localDeclarations = localDeclarations(children.get(1));
+        final List<Ast> statements = statementList(children.get(2));
+        return new Ast.CompoundStatement(localDeclarations, statements);
+    }
+
+    // local-declarations -> local-declarations var-declaration | empty
+    private List<Ast> localDeclarations(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.isEmpty()) { return new ArrayList<>(); }
+        else {
+            final List<Ast> decls = localDeclarations(children.get(0));
+            decls.add(varDeclaration(children.get(1)));
+            return decls;
+        }
+    }
+
+    // statement-list -> statement-list statement | empty
+    private List<Ast> statementList(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.isEmpty()) { return new ArrayList<>(); }
+        else {
+            final List<Ast> statements = statementList(children.get(0));
+            statements.add(statement(children.get(1)));
+            return statements;
+        }
+    }
+
+    // statement -> expression-stmt | compound-stmt | selection-stmt | iteration-stmt | return-stmt
+    private Ast statement(final ParseTree<Token> parseTree) {
+        final ParseTree<Token> child = parseTree.getChildren().get(0);
+        if (expressionStmt.equals(child.getSymbol())) { return expressionStmt(child); }
+        if (compoundStmt.equals(child.getSymbol())) { return compoundStmt(child); }
+        if (selectionStmt.equals(child.getSymbol())) { return selectionStmt(child); }
+        if (iterationStmt.equals(child.getSymbol())) { return iterationStmt(child); }
+        if (returnStmt.equals(child.getSymbol())) { return returnStmt(child); }
+        throw new IllegalStateException();
+    }
+
+    // expression-stmt -> expression ; | ;
+    private Ast expressionStmt(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 1) { return new Ast.ExpressionStmt(Optional.empty()); }
+        if (children.size() == 2) { return new Ast.ExpressionStmt(Optional.of(expression(children.get(0)))); }
+        throw new IllegalStateException();
+    }
+
+    // expression -> var = expression | simple-expression
+    private Ast expression(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 3) {
+            final Ast var = var(children.get(0));
+            final Ast expression = expression(children.get(2));
+            return new Ast.Assignment(var, expression);
+        }
+        if (children.size() == 1) {
+            return simpleExpression(children.get(0));
+        }
+        throw new IllegalStateException();
+    }
+
+    // var -> id | id [ expression ]
+    private Ast var(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        final String name = id(children.get(0));
+        if (children.size() == 1) { return new Ast.Var(name, Optional.empty()); }
+        if (children.size() == 4) { return new Ast.Var(name, Optional.of(expression(children.get(2)))); }
+        throw new IllegalStateException();
+    }
+
+    // simple-expression -> additive-expression relop additive-expression | additive-expression
+    private Ast simpleExpression(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 1) {
+            final Ast left = additiveExpression(children.get(0));
+            return new Ast.Expression(left, Optional.empty(), Optional.empty());
+        }
+        if (children.size() == 3) {
+            final Ast left = additiveExpression(children.get(0));
+            final Ast.Operator op = operator(children.get(1));
+            final Ast right = additiveExpression(children.get(2));
+            return new Ast.Expression(left, Optional.of(op), Optional.of(right));
+        }
+        throw new IllegalStateException();
+    }
+
+    private final Map<Symbol,Ast.Operator> operators = new HashMap<Symbol,Ast.Operator>() {{
+        put(less, Ast.Operator.LT);
+        put(lessOrEqual, Ast.Operator.LEQ);
+        put(greater, Ast.Operator.GT);
+        put(greaterOrEqual, Ast.Operator.GEQ);
+        put(equal, Ast.Operator.EQ);
+        put(notEqual, Ast.Operator.NEQ);
+        put(plus, Ast.Operator.PLUS);
+        put(minus, Ast.Operator.MINUS);
+        put(times, Ast.Operator.TIMES);
+        put(div, Ast.Operator.DIVIDE);
+    }};
+
+    private Ast.Operator operator(final ParseTree<Token> parseTree) {
+        final Symbol s = parseTree.getChildren().get(0).getSymbol();
+        return Optional.ofNullable(operators.get(s)).orElseThrow(IllegalStateException::new);
+    }
+
+    // additive-expression -> additive-expression addop term | term
+    private Ast additiveExpression(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 1) {
+            return term(children.get(0));
+        }
+        if (children.size() == 3) {
+            final Ast left = additiveExpression(children.get(0));
+            final Ast.Operator op = operator(children.get(1));
+            final Ast right = term(children.get(2));
+            return new Ast.Expression(left, Optional.of(op), Optional.of(right));
+        }
+        throw new IllegalStateException();
+    }
+
+    // term -> term mulop factor | factor
+    private Ast term(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 1) {
+            return factor(children.get(0));
+        }
+        if (children.size() == 3) {
+            final Ast left = term(children.get(0));
+            final Ast.Operator op = operator(children.get(1));
+            final Ast right = factor(children.get(2));
+            return new Ast.Expression(left, Optional.of(op), Optional.of(right));
+        }
+        throw new IllegalStateException();
+    }
+
+    // factor -> ( expression ) | var | call | num
+    private Ast factor(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 1) {
+            final ParseTree<Token> child = children.get(0);
+            if (var.equals(child.getSymbol())) { return var(child); }
+            if (call.equals(child.getSymbol())) { return call(child); }
+            if (num.equals(child.getSymbol())) { return new Ast.Constant(number(child)); }
+            throw new IllegalStateException();
+        }
+        if (children.size() == 3) {
+            return expression(children.get(1));
+        }
+        throw new IllegalStateException();
+    }
+
+    // call -> id ( args )
+    private Ast call(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        final String name = id(children.get(0));
+        final List<Ast> args = args(children.get(1));
+        return new Ast.Call(name, args);
+    }
+
+    // args -> arg-list | empty
+    private List<Ast> args(final ParseTree<Token> parseTree) {
+        if (parseTree.getChildren().size() > 0) {
+            return argList(parseTree.getChildren().get(0));
+        }
+        return emptyList();
+    }
+
+    // arg-list -> arg-list , expression | expression
+    private List<Ast> argList(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 1) { return new ArrayList<>(singletonList(expression(children.get(0)))); }
+        else {
+            final List<Ast> args = argList(children.get(0));
+            args.add(statement(children.get(2)));
+            return args;
+        }
+    }
+
+    // selection-stmt -> if ( expression ) statement | if ( expression ) statement else statement
+    private Ast selectionStmt(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 5) {
+            final Ast condition = expression(children.get(2));
+            final Ast thenPart = statement(children.get(4));
+            return new Ast.IfThen(condition, thenPart);
+        }
+        if (children.size() == 7) {
+            final Ast condition = expression(children.get(2));
+            final Ast thenPart = statement(children.get(4));
+            final Ast elsePart = statement(children.get(6));
+            return new Ast.IfThenElse(condition, thenPart, elsePart);
+        }
+        throw new IllegalStateException();
+    }
+
+    // iteration-stmt -> while ( expression ) statement
+    private Ast iterationStmt(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        final Ast condition = expression(children.get(2));
+        final Ast body = statement(children.get(4));
+        return new Ast.While(condition, body);
+    }
+
+    // return-stmt -> return ; | return expression ;
+    private Ast returnStmt(final ParseTree<Token> parseTree) {
+        final List<ParseTree<Token>> children = parseTree.getChildren();
+        if (children.size() == 2) { return new Ast.Return(Optional.empty()); }
+        if (children.size() == 3) { return new Ast.Return(Optional.of(expression(children.get(1)))); }
+        throw new IllegalStateException();
     }
 }

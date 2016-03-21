@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
+import static org.junit.Assert.assertTrue;
 
 public class CmParserTest {
 
@@ -24,20 +25,22 @@ public class CmParserTest {
     @Test
     public void gcd() {
         final String program = getTestProgram("gcd.cm");
-        final Either<Error<Character>, Pair<List<Token>, Source<Character>>> result = new CmScanner()
+        final Either<Error<Character>, Pair<List<Token>, Source<Character>>> tokens = new CmScanner()
                 .tokenize(new CharacterSource(program));
         final CmParser parser = new CmParser();
-        parser.parse(result.getRight().get().getLeft());
-        // TODO assert that AST was created
+        final Either<String,Ast> result = parser.parse(tokens.getRight().get().getLeft());
+        assertTrue(result.getRight().isPresent());
+        //System.out.println(result.getRight().get());
     }
 
     @Test
     public void sort() {
         final String program = getTestProgram("sort.cm");
-        final Either<Error<Character>, Pair<List<Token>, Source<Character>>> result = new CmScanner()
+        final Either<Error<Character>, Pair<List<Token>, Source<Character>>> tokens = new CmScanner()
                 .tokenize(new CharacterSource(program));
         final CmParser parser = new CmParser();
-        parser.parse(result.getRight().get().getLeft());
-        // TODO assert that AST was created
+        final Either<String,Ast> result = parser.parse(tokens.getRight().get().getLeft());
+        assertTrue(result.getRight().isPresent());
+        //System.out.println(result.getRight().get());
     }
 }
