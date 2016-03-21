@@ -446,7 +446,7 @@ public class CmParser {
     private Ast call(final ParseTree<Token> parseTree) {
         final List<ParseTree<Token>> children = parseTree.getChildren();
         final String name = id(children.get(0));
-        final List<Ast> args = args(children.get(1));
+        final List<Ast> args = args(children.get(2));
         return new Ast.Call(name, args);
     }
 
@@ -464,7 +464,7 @@ public class CmParser {
         if (children.size() == 1) { return new ArrayList<>(singletonList(expression(children.get(0)))); }
         else {
             final List<Ast> args = argList(children.get(0));
-            args.add(statement(children.get(2)));
+            args.add(expression(children.get(2)));
             return args;
         }
     }
