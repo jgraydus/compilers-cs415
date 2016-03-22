@@ -11,7 +11,7 @@ import java.util.function.Function;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.toList;
 
-// TODO
+/** LR1 parser generator */
 public class LR1Parser<T> extends Parser<T> {
     private final Logger logger = new Logger();
 
@@ -135,7 +135,7 @@ public class LR1Parser<T> extends Parser<T> {
         return tables;
     }
 
-    boolean isTarget(final LR1Item item) {
+    private boolean isTarget(final LR1Item item) {
         return item.production.getLhs().equals(Symbol.goal) && item.getLookAhead().equals(Symbol.$);
     }
 
@@ -191,13 +191,13 @@ public class LR1Parser<T> extends Parser<T> {
         }
     }
 
-    static class Action {}
+    private static class Action {}
 
-    static class Accept extends Action {
+    private static class Accept extends Action {
         @Override public String toString() { return "accept"; }
     }
 
-    static class Shift extends Action {
+    private static class Shift extends Action {
         final int nextState;
         Shift(final int nextState) { this.nextState = nextState; }
         @Override public String toString() { return "shift:" + nextState; }
@@ -212,7 +212,7 @@ public class LR1Parser<T> extends Parser<T> {
         }
     }
 
-    static class Reduce extends Action {
+    private static class Reduce extends Action {
         final Production production;
         Reduce(final Production production) { this.production = production; }
         @Override public String toString() { return "reduce:" + production; }
@@ -371,7 +371,7 @@ public class LR1Parser<T> extends Parser<T> {
         private final int dotPosition;
         private final Symbol lookAhead;
 
-        public LR1Item(final Production production,
+        LR1Item(final Production production,
                        final int dotPosition,
                        final Symbol lookAhead) {
             this.production = production;
@@ -380,12 +380,12 @@ public class LR1Parser<T> extends Parser<T> {
         }
 
         /** @return the string of symbols after the dot */
-        public List<Symbol> getSymbolsAfterDot() {
+        List<Symbol> getSymbolsAfterDot() {
             final List<Symbol> rhs = production.getRhs();
             return new LinkedList<>(rhs.subList(dotPosition, rhs.size()));
         }
 
-        public Symbol getLookAhead() { return lookAhead; }
+        Symbol getLookAhead() { return lookAhead; }
 
         @Override
         public boolean equals(final Object obj) {

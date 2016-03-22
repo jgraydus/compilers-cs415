@@ -1,3 +1,4 @@
+/* Joshua Graydus | March 2016 */
 package cm;
 
 import java.lang.reflect.Field;
@@ -9,13 +10,8 @@ import java.util.Optional;
 
 public abstract class Ast {
 
-    public enum TypeSpecifier {
-        INT, VOID
-    }
-
-    public enum Operator {
-        PLUS, MINUS, TIMES, DIVIDE, LEQ, LT, GEQ, GT, EQ, NEQ
-    }
+    public enum TypeSpecifier { INT, VOID }
+    public enum Operator { PLUS, MINUS, TIMES, DIVIDE, LEQ, LT, GEQ, GT, EQ, NEQ }
 
     public static class DeclarationList extends Ast {
         private final List<Ast> declarations;
@@ -25,34 +21,32 @@ public abstract class Ast {
         }
     }
 
-    public static class Declaration extends Ast {
-        public static class VarDeclaration extends Declaration {
-            private final TypeSpecifier type;
-            private final String name;
-            private final Optional<Integer> size; // empty if not an array
+    public static class VarDeclaration extends Ast {
+        private final TypeSpecifier type;
+        private final String name;
+        private final Optional<Integer> size; // empty if not an array
 
-            public VarDeclaration(final TypeSpecifier type, final String name, final Optional<Integer> size) {
-                this.type = type;
-                this.name = name;
-                this.size = size;
-            }
+        public VarDeclaration(final TypeSpecifier type, final String name, final Optional<Integer> size) {
+            this.type = type;
+            this.name = name;
+            this.size = size;
         }
+    }
 
-        public static class FunDeclaration extends Declaration {
-            private final TypeSpecifier type;
-            private final String name;
-            private final List<Ast> params;
-            private final Ast body;
+    public static class FunDeclaration extends Ast {
+        private final TypeSpecifier type;
+        private final String name;
+        private final List<Ast> params;
+        private final Ast body;
 
-            public FunDeclaration(final TypeSpecifier type,
-                                  final String name,
-                                  final List<Ast> params,
-                                  final Ast body) {
-                this.type = type;
-                this.name = name;
-                this.params = params;
-                this.body = body;
-            }
+        public FunDeclaration(final TypeSpecifier type,
+                              final String name,
+                              final List<Ast> params,
+                              final Ast body) {
+            this.type = type;
+            this.name = name;
+            this.params = params;
+            this.body = body;
         }
     }
 
@@ -182,6 +176,7 @@ public abstract class Ast {
         catch (final Exception e) { throw new RuntimeException(e); }
     }
 
+    /* converts an AST into a string using indentation to indicate subtrees */
     private String string(final int depth) throws Exception {
         final String indent = indent(depth);
         final StringBuilder sb = new StringBuilder();

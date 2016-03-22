@@ -194,7 +194,6 @@ public class CmParser {
         if (result.getLeft().isPresent()) {
             return Either.left(String.join("\n", result.getLeft().get().stream().map(Token::toString).collect(toList())));
         }
-
         // otherwise, convert parse tree to abstract syntax tree
         return Either.right(toSyntaxTree(result.getRight().get()));
     }
@@ -248,7 +247,7 @@ public class CmParser {
         final Optional<Integer> size = children.size() == 3
                 ? Optional.empty()
                 : Optional.of(number(children.get(3)));
-        return new Ast.Declaration.VarDeclaration(type, name, size);
+        return new Ast.VarDeclaration(type, name, size);
     }
 
     // fun-declaration -> type-specifier id ( params ) compound-stmt
@@ -258,7 +257,7 @@ public class CmParser {
         final String name = id(children.get(1));
         final List<Ast> params = params(children.get(3));
         final Ast body = compoundStmt(children.get(5));
-        return new Ast.Declaration.FunDeclaration(type, name, params, body);
+        return new Ast.FunDeclaration(type, name, params, body);
     }
 
     // params -> param-list | void
