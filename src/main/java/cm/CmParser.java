@@ -192,7 +192,8 @@ public class CmParser {
 
         // if failed while building parse tree, then return an error message
         if (result.getLeft().isPresent()) {
-            return Either.left(String.join("\n", result.getLeft().get().stream().map(Token::toString).collect(toList())));
+            return Either.left(String.join("\n", result.getLeft().get().stream()
+                    .map(token -> token.src == null ? token.toString() : token.src.toString()).collect(toList())));
         }
         // otherwise, convert parse tree to abstract syntax tree
         return Either.right(toSyntaxTree(result.getRight().get()));

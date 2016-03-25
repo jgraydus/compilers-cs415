@@ -60,7 +60,7 @@ public class LR1Parser<T> extends Parser<T> {
                         .filter(s -> !s.equals(Symbol.epsilon)).collect(toList());
                 final Symbol a = reduce.production.getLhs();
                 final int size = production.size();
-                final ParseTree<T> t = new ParseTree<>(a, null);
+                final ParseTree<T> t = new ParseTree<>(a, token);
                 final Stack<ParseTree<T>> temp = new Stack<>(); // to add the children in the correct order
                 for (int i=0; i<size; i++) {
                     stateStack.pop();
