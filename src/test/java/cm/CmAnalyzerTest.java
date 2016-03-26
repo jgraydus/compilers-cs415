@@ -12,9 +12,8 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
-import static org.junit.Assert.assertTrue;
 
-public class CmParserTest {
+public class CmAnalyzerTest {
 
     static String getTestProgram(final String filename) {
         final BufferedReader reader =
@@ -28,9 +27,9 @@ public class CmParserTest {
         final Either<Error<Character>, Pair<List<Token>, Source<Character>>> tokens = new CmScanner()
                 .tokenize(new CharacterSource(program));
         final CmParser parser = new CmParser();
-        final Either<String,Ast> result = parser.parse(tokens.getRight().get().getLeft());
-        assertTrue(result.getRight().isPresent());
-        //System.out.println(result.getRight().get());
+        final Ast ast = parser.parse(tokens.getRight().get().getLeft()).getRight().get();
+        final CmAnalyzer analyzer = new CmAnalyzer();
+        analyzer.typeCheck(ast);
     }
 
     @Test
@@ -39,8 +38,8 @@ public class CmParserTest {
         final Either<Error<Character>, Pair<List<Token>, Source<Character>>> tokens = new CmScanner()
                 .tokenize(new CharacterSource(program));
         final CmParser parser = new CmParser();
-        final Either<String,Ast> result = parser.parse(tokens.getRight().get().getLeft());
-        assertTrue(result.getRight().isPresent());
-        //System.out.println(result.getRight().get());
+        final Ast ast = parser.parse(tokens.getRight().get().getLeft()).getRight().get();
+        final CmAnalyzer analyzer = new CmAnalyzer();
+        analyzer.typeCheck(ast);
     }
 }

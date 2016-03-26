@@ -192,8 +192,7 @@ public class CmParser {
 
         // if failed while building parse tree, then return an error message
         if (result.getLeft().isPresent()) {
-            return Either.left(String.join("\n", result.getLeft().get().stream()
-                    .map(token -> token.src == null ? token.toString() : token.src.toString()).collect(toList())));
+            return Either.left(String.join("\n", result.getLeft().get().stream().map(Token::toString).collect(toList())));
         }
         // otherwise, convert parse tree to abstract syntax tree
         return Either.right(toSyntaxTree(result.getRight().get()));
@@ -201,7 +200,7 @@ public class CmParser {
 
     // program -> declaration-list
     private Ast toSyntaxTree(final ParseTree<Token> parseTree) {
-        return new Ast.DeclarationList(declarationList(parseTree.getChildren().get(0)));
+        return new Ast.DeclarationList(getToken(parseTree), declarationList(parseTree.getChildren().get(0)));
     }
 
     // declaration-list -> declaration-list declaration | declaration
@@ -248,7 +247,7 @@ public class CmParser {
         final Optional<Integer> size = children.size() == 3
                 ? Optional.empty()
                 : Optional.of(number(children.get(3)));
-        return new Ast.VarDeclaration(type, name, size);
+        return new Ast.VarDeclaration(getToken(parseTree), type, name, size);
     }
 
     // fun-declaration -> type-specifier id ( params ) compound-stmt
@@ -258,7 +257,7 @@ public class CmParser {
         final String name = id(children.get(1));
         final List<Ast> params = params(children.get(3));
         final Ast body = compoundStmt(children.get(5));
-        return new Ast.FunDeclaration(type, name, params, body);
+        return new Ast.FunDeclaration(getToken(parseTree), type, name, params, body);
     }
 
     // params -> param-list | void
@@ -285,8 +284,8 @@ public class CmParser {
         final List<ParseTree<Token>> children = parseTree.getChildren();
         final Ast.TypeSpecifier type = typeSpecifier(children.get(0));
         final String name = id(children.get(1));
-        if (children.size() == 2) { return new Ast.Param(type, name, false); } // not array
-        if (children.size() == 4) { return new Ast.Param(type, name, true); }  // array
+        if (children.size() == 2) { return new Ast.Param(getToken(parseTree), type, name, false); } // not array
+        if (children.size() == 4) { return new Ast.Param(getToken(parseTree), type, name, true); }  // array
         throw new IllegalStateException();
     }
 
@@ -295,7 +294,7 @@ public class CmParser {
         final List<ParseTree<Token>> children = parseTree.getChildren();
         final List<Ast> localDeclarations = localDeclarations(children.get(1));
         final List<Ast> statements = statementList(children.get(2));
-        return new Ast.CompoundStatement(localDeclarations, statements);
+        return new Ast.CompoundStatement(getToken(parseTree), localDeclarations, statements);
     }
 
     // local-declarations -> local-declarations var-declaration | empty
@@ -334,8 +333,8 @@ public class CmParser {
     // expression-stmt -> expression ; | ;
     private Ast expressionStmt(final ParseTree<Token> parseTree) {
         final List<ParseTree<Token>> children = parseTree.getChildren();
-        if (children.size() == 1) { return new Ast.ExpressionStmt(Optional.empty()); }
-        if (children.size() == 2) { return new Ast.ExpressionStmt(Optional.of(expression(children.get(0)))); }
+        if (children.size() == 1) { return new Ast.ExpressionStmt(getToken(parseTree), Optional.empty()); }
+        if (children.size() == 2) { return new Ast.ExpressionStmt(getToken(parseTree), Optional.of(expression(children.get(0)))); }
         throw new IllegalStateException();
     }
 
@@ -345,7 +344,7 @@ public class CmParser {
         if (children.size() == 3) {
             final Ast var = var(children.get(0));
             final Ast expression = expression(children.get(2));
-            return new Ast.Assignment(var, expression);
+            return new Ast.Assignment(getToken(parseTree), var, expression);
         }
         if (children.size() == 1) {
             return simpleExpression(children.get(0));
@@ -357,8 +356,8 @@ public class CmParser {
     private Ast var(final ParseTree<Token> parseTree) {
         final List<ParseTree<Token>> children = parseTree.getChildren();
         final String name = id(children.get(0));
-        if (children.size() == 1) { return new Ast.Var(name, Optional.empty()); }
-        if (children.size() == 4) { return new Ast.Var(name, Optional.of(expression(children.get(2)))); }
+        if (children.size() == 1) { return new Ast.Var(getToken(parseTree), name, Optional.empty()); }
+        if (children.size() == 4) { return new Ast.Var(getToken(parseTree), name, Optional.of(expression(children.get(2)))); }
         throw new IllegalStateException();
     }
 
@@ -367,13 +366,13 @@ public class CmParser {
         final List<ParseTree<Token>> children = parseTree.getChildren();
         if (children.size() == 1) {
             final Ast left = additiveExpression(children.get(0));
-            return new Ast.Expression(left, Optional.empty(), Optional.empty());
+            return new Ast.Expression(getToken(parseTree), left, Optional.empty(), Optional.empty());
         }
         if (children.size() == 3) {
             final Ast left = additiveExpression(children.get(0));
             final Ast.Operator op = operator(children.get(1));
             final Ast right = additiveExpression(children.get(2));
-            return new Ast.Expression(left, Optional.of(op), Optional.of(right));
+            return new Ast.Expression(getToken(parseTree), left, Optional.of(op), Optional.of(right));
         }
         throw new IllegalStateException();
     }
@@ -406,7 +405,7 @@ public class CmParser {
             final Ast left = additiveExpression(children.get(0));
             final Ast.Operator op = operator(children.get(1));
             final Ast right = term(children.get(2));
-            return new Ast.Expression(left, Optional.of(op), Optional.of(right));
+            return new Ast.Expression(getToken(parseTree), left, Optional.of(op), Optional.of(right));
         }
         throw new IllegalStateException();
     }
@@ -421,7 +420,7 @@ public class CmParser {
             final Ast left = term(children.get(0));
             final Ast.Operator op = operator(children.get(1));
             final Ast right = factor(children.get(2));
-            return new Ast.Expression(left, Optional.of(op), Optional.of(right));
+            return new Ast.Expression(getToken(parseTree), left, Optional.of(op), Optional.of(right));
         }
         throw new IllegalStateException();
     }
@@ -433,7 +432,7 @@ public class CmParser {
             final ParseTree<Token> child = children.get(0);
             if (var.equals(child.getSymbol())) { return var(child); }
             if (call.equals(child.getSymbol())) { return call(child); }
-            if (num.equals(child.getSymbol())) { return new Ast.Constant(number(child)); }
+            if (num.equals(child.getSymbol())) { return new Ast.Constant(getToken(parseTree), number(child)); }
             throw new IllegalStateException();
         }
         if (children.size() == 3) {
@@ -447,7 +446,7 @@ public class CmParser {
         final List<ParseTree<Token>> children = parseTree.getChildren();
         final String name = id(children.get(0));
         final List<Ast> args = args(children.get(2));
-        return new Ast.Call(name, args);
+        return new Ast.Call(getToken(parseTree), name, args);
     }
 
     // args -> arg-list | empty
@@ -475,13 +474,13 @@ public class CmParser {
         if (children.size() == 5) {
             final Ast condition = expression(children.get(2));
             final Ast thenPart = statement(children.get(4));
-            return new Ast.IfThen(condition, thenPart);
+            return new Ast.IfThen(getToken(parseTree), condition, thenPart);
         }
         if (children.size() == 7) {
             final Ast condition = expression(children.get(2));
             final Ast thenPart = statement(children.get(4));
             final Ast elsePart = statement(children.get(6));
-            return new Ast.IfThenElse(condition, thenPart, elsePart);
+            return new Ast.IfThenElse(getToken(parseTree), condition, thenPart, elsePart);
         }
         throw new IllegalStateException();
     }
@@ -491,14 +490,23 @@ public class CmParser {
         final List<ParseTree<Token>> children = parseTree.getChildren();
         final Ast condition = expression(children.get(2));
         final Ast body = statement(children.get(4));
-        return new Ast.While(condition, body);
+        return new Ast.While(getToken(parseTree), condition, body);
     }
 
     // return-stmt -> return ; | return expression ;
     private Ast returnStmt(final ParseTree<Token> parseTree) {
         final List<ParseTree<Token>> children = parseTree.getChildren();
-        if (children.size() == 2) { return new Ast.Return(Optional.empty()); }
-        if (children.size() == 3) { return new Ast.Return(Optional.of(expression(children.get(1)))); }
+        if (children.size() == 2) { return new Ast.Return(getToken(parseTree), Optional.empty()); }
+        if (children.size() == 3) { return new Ast.Return(getToken(parseTree), Optional.of(expression(children.get(1)))); }
         throw new IllegalStateException();
+    }
+
+    private Token getToken(final ParseTree<Token> parseTree) {
+        if (parseTree.getT() != null) { return parseTree.getT(); }
+        for (final ParseTree<Token> child : parseTree.getChildren()) {
+            final Token token = getToken(child);
+            if (token != null) { return token; }
+        }
+        return null;
     }
 }

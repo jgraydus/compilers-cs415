@@ -17,6 +17,8 @@ public abstract class Token {
         this.type = type;
     }
 
+    public Source<Character> getSrc() { return src; }
+
     public enum Type {
         ELSE, IF, INT, RETURN, VOID, WHILE, PLUS, MINUS, MULTIPLY, DIVIDE, LESS_THAN, LESS_THAN_OR_EQUAL, GREATER_THAN,
         GREATER_THAN_OR_EQUAL, EQUAL, NOT_EQUAL, ASSIGN, SEMICOLON, COMMA, LEFT_PAREN, RIGHT_PAREN, LEFT_BRACKET,

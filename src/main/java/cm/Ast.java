@@ -3,12 +3,20 @@ package cm;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public abstract class Ast {
+    private final Optional<Token> token;
+    private final Map<Class, Object> attributes = new HashMap<>();
+
+    private Ast(final Token token) {
+        this.token = Optional.ofNullable(token);
+    }
+
+    public Optional<Token> getToken() { return token; }
+
+    public <T> void addAttribute(final Class<T> klass, T t) { attributes.put(klass, t); }
+    public <T> Optional<T> getAttribute(final Class<T> klass) { return Optional.ofNullable((T) attributes.get(klass)); }
 
     public enum TypeSpecifier { INT, VOID }
     public enum Operator { PLUS, MINUS, TIMES, DIVIDE, LEQ, LT, GEQ, GT, EQ, NEQ }
@@ -16,9 +24,12 @@ public abstract class Ast {
     public static class DeclarationList extends Ast {
         private final List<Ast> declarations;
 
-        public DeclarationList(final List<Ast> declarations) {
+        public DeclarationList(final Token token, final List<Ast> declarations) {
+            super(token);
             this.declarations = declarations;
         }
+
+        public List<Ast> getDeclarations() { return declarations; }
     }
 
     public static class VarDeclaration extends Ast {
@@ -26,11 +37,19 @@ public abstract class Ast {
         private final String name;
         private final Optional<Integer> size; // empty if not an array
 
-        public VarDeclaration(final TypeSpecifier type, final String name, final Optional<Integer> size) {
+        public VarDeclaration(final Token token,
+                              final TypeSpecifier type,
+                              final String name,
+                              final Optional<Integer> size) {
+            super(token);
             this.type = type;
             this.name = name;
             this.size = size;
         }
+
+        public TypeSpecifier getType() { return type; }
+        public Optional<Integer> getSize() { return size; }
+        public String getName() { return name; }
     }
 
     public static class FunDeclaration extends Ast {
@@ -39,15 +58,22 @@ public abstract class Ast {
         private final List<Ast> params;
         private final Ast body;
 
-        public FunDeclaration(final TypeSpecifier type,
+        public FunDeclaration(final Token token,
+                              final TypeSpecifier type,
                               final String name,
                               final List<Ast> params,
                               final Ast body) {
+            super(token);
             this.type = type;
             this.name = name;
             this.params = params;
             this.body = body;
         }
+
+        public TypeSpecifier getType() { return type; }
+        public String getName() { return name; }
+        public List<Ast> getParams() { return params; }
+        public Ast getBody() { return body; }
     }
 
     public static class Param extends Ast {
@@ -55,89 +81,125 @@ public abstract class Ast {
         private final String name;
         private final boolean isArray;
 
-        public Param(final TypeSpecifier type, final String name, final boolean isArray) {
+        public Param(final Token token, final TypeSpecifier type, final String name, final boolean isArray) {
+            super(token);
             this.type = type;
             this.name = name;
             this.isArray = isArray;
         }
+
+        public TypeSpecifier getType() { return type; }
+        public String getName() { return name; }
+        public boolean isArray() { return isArray; }
     }
 
     public static class CompoundStatement extends Ast {
         private final List<Ast> localDeclarations;
         private final List<Ast> statements;
 
-        public CompoundStatement(final List<Ast> localDeclarations, final List<Ast> statements) {
+        public CompoundStatement(final Token token, final List<Ast> localDeclarations, final List<Ast> statements) {
+            super(token);
             this.localDeclarations = localDeclarations;
             this.statements = statements;
         }
+
+        public List<Ast> getLocalDeclarations() { return localDeclarations; }
+        public List<Ast> getStatements() { return statements; }
     }
 
     public static class Assignment extends Ast {
-        final Ast var;
-        final Ast expression;
+        private final Ast var;
+        private final Ast expression;
 
-        public Assignment(final Ast var, final Ast expression) {
+        public Assignment(final Token token, final Ast var, final Ast expression) {
+            super(token);
             this.var = var;
             this.expression = expression;
         }
+
+        public Ast getVar() { return var; }
+        public Ast getExpression() { return expression; }
     }
 
     public static class Expression extends Ast {
-        final Ast left;
-        final Optional<Operator> op;
-        final Optional<Ast> right;
+        private final Ast left;
+        private final Optional<Operator> op;
+        private final Optional<Ast> right;
 
-        public Expression(final Ast left, final Optional<Operator> op, final Optional<Ast> right) {
+        public Expression(final Token token, final Ast left, final Optional<Operator> op, final Optional<Ast> right) {
+            super(token);
             this.left = left;
             this.op = op;
             this.right = right;
         }
+
+        public Ast getLeft() { return left; }
+        public Optional<Operator> getOp() { return op; }
+        public Optional<Ast> getRight() { return right; }
     }
 
     public static class Var extends Ast {
-        final String name;
-        final Optional<Ast> expression;
+        private final String name;
+        private final Optional<Ast> expression;
 
-        public Var(final String name, final Optional<Ast> expression) {
+        public Var(final Token token, final String name, final Optional<Ast> expression) {
+            super(token);
             this.name = name;
             this.expression = expression;
         }
+
+        public String getName() { return name; }
+        public Optional<Ast> getExpression() { return expression; }
     }
 
     public static class ExpressionStmt extends Ast {
-        final Optional<Ast> expression;
+        private final Optional<Ast> expression;
 
-        public ExpressionStmt(final Optional<Ast> expression) {
+        public ExpressionStmt(final Token token, final Optional<Ast> expression) {
+            super(token);
             this.expression = expression;
         }
+
+        public Optional<Ast> getExpression() { return expression; }
     }
 
     public static class Constant extends Ast {
         private final int value;
 
-        public Constant(final int value) {
+        public Constant(final Token token, final int value) {
+            super(token);
             this.value = value;
         }
+
+        public int getValue() { return value; }
     }
 
     public static class Call extends Ast {
         private final String name;
         private final List<Ast> args;
 
-        public Call(final String name, final List<Ast> args) {
+        public Call(final Token token, final String name, final List<Ast> args) {
+            super(token);
             this.name = name;
             this.args = args;
         }
+
+        public String getName() { return name; }
+        public List<Ast> getArgs() { return args; }
     }
 
     public static class IfThen extends Ast {
         private final Ast condition;
         private final Ast thenPart;
 
-        public IfThen(final Ast condition, final Ast thenPart) {
+        public IfThen(final Token token, final Ast condition, final Ast thenPart) {
+            super(token);
             this.condition = condition;
             this.thenPart = thenPart;
         }
+
+        public Ast getCondition() { return condition; }
+        public Ast getThenPart() { return thenPart; }
     }
 
     public static class IfThenElse extends Ast {
@@ -145,29 +207,41 @@ public abstract class Ast {
         private final Ast thenPart;
         private final Ast elsePart;
 
-        public IfThenElse(final Ast condition, final Ast thenPart, final Ast elsePart) {
+        public IfThenElse(final Token token, final Ast condition, final Ast thenPart, final Ast elsePart) {
+            super(token);
             this.condition = condition;
             this.thenPart = thenPart;
             this.elsePart = elsePart;
         }
+
+        public Ast getCondition() { return condition; }
+        public Ast getThenPart() { return thenPart; }
+        public Ast getElsePart() { return elsePart; }
     }
 
     public static class While extends Ast {
         private final Ast condition;
         private final Ast body;
 
-        public While(final Ast condition, final Ast body) {
+        public While(final Token token, final Ast condition, final Ast body) {
+            super(token);
             this.condition = condition;
             this.body = body;
         }
+
+        public Ast getCondition() { return condition; }
+        public Ast getBody() { return body; }
     }
 
     public static class Return extends Ast {
-        final Optional<Ast> expression;
+        private final Optional<Ast> expression;
 
-        public Return(final Optional<Ast> expression) {
+        public Return(final Token token, final Optional<Ast> expression) {
+            super(token);
             this.expression = expression;
         }
+
+        public Optional<Ast> getExpression() { return expression; }
     }
 
     @Override
