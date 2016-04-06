@@ -1,8 +1,12 @@
+/* Joshua Graydus | March 2016 */
 package cm;
 
 import cm.type.Type;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -13,6 +17,7 @@ public class CmAnalyzer {
     public void typeCheck(final Ast ast) {
         final Map<String,Type> vars = new HashMap<>();
         final Map<String,Signature> funs = new HashMap<>();
+        // 'input' and 'output' will be provided by the runtime environment
         funs.put("input", new Signature(Type.INT, emptyList()));
         funs.put("output", new Signature(Type.VOID, singletonList(Type.INT)));
         typeCheck(ast, vars, funs);
