@@ -487,28 +487,8 @@ public class CmCodeGen {
         final List<Ast> args = call.getArgs();
         final List<Ast.Param> params = funDec.getParams().stream().map(p -> (Ast.Param)p).collect(toList());
         for (int i = args.size()-1; i>=0; i--) {
-            // if the parameter is expecting an array, then we must push the address instead of the value
-/*            if (params.get(i).isArray()) {
-                final Ast.Var var = (Ast.Var)((Ast.Expression) args.get(i)).getLeft();
-                final String varName = var.getAttribute(UniqueName.class).get().getName();
-                tmp.add(new Instruction.Nop("array param " + varName));
-                if (env.getLocalVars().containsKey(varName)) {
-                    final int offset = env.getLocalVar(varName);
-                    tmp.add(new Instruction.Lda(AX, offset, FP));
-                    tmp.addAll(push(AX));
-                } else if (env.getGlobalVars().containsKey(varName)) {
-                    final int address = env.getGlobalVar(varName);
-                    tmp.add(new Instruction.Ldc(AX, address));
-                    tmp.addAll(push(AX));
-                } else {
-                    throw new IllegalStateException();
-                }
-            }
-            // if the parameter is not an array, then evaluate the expression and push the result
-            else {*/
-                tmp.addAll(emitExp((Ast.Expression) args.get(i), env));
-                tmp.addAll(push(AX));
-            /*}*/
+            tmp.addAll(emitExp((Ast.Expression) args.get(i), env));
+            tmp.addAll(push(AX));
         }
         // push FP
         tmp.addAll(push(FP));

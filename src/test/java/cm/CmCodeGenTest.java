@@ -24,7 +24,7 @@ public class CmCodeGenTest {
 
     @Test
     public void gcd() {
-        final String program = getTestProgram("test.cm");
+        final String program = getTestProgram("gcd.cm");
         final Either<Error<Character>, Pair<List<Token>, Source<Character>>> tokens = new CmScanner()
                 .tokenize(new CharacterSource(program));
         final CmParser parser = new CmParser();
