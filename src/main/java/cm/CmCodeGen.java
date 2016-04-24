@@ -374,9 +374,6 @@ public class CmCodeGen {
             else {
                 final List<Instruction> instrs = new LinkedList<>();
                 instrs.add(new Instruction.Nop("load local var " + name));
-                /*instrs.add(env.arrayRefs.contains(name)
-                        ? new Instruction.Lda(AX, offset, FP, "by reference")
-                        : new Instruction.Ld(AX, offset, FP, "by value"));*/
                 instrs.add(new Instruction.Ld(AX, offset, FP));
                 return instrs;
             }
@@ -491,7 +488,7 @@ public class CmCodeGen {
         final List<Ast.Param> params = funDec.getParams().stream().map(p -> (Ast.Param)p).collect(toList());
         for (int i = args.size()-1; i>=0; i--) {
             // if the parameter is expecting an array, then we must push the address instead of the value
-            if (params.get(i).isArray()) {
+/*            if (params.get(i).isArray()) {
                 final Ast.Var var = (Ast.Var)((Ast.Expression) args.get(i)).getLeft();
                 final String varName = var.getAttribute(UniqueName.class).get().getName();
                 tmp.add(new Instruction.Nop("array param " + varName));
@@ -508,10 +505,10 @@ public class CmCodeGen {
                 }
             }
             // if the parameter is not an array, then evaluate the expression and push the result
-            else {
+            else {*/
                 tmp.addAll(emitExp((Ast.Expression) args.get(i), env));
                 tmp.addAll(push(AX));
-            }
+            /*}*/
         }
         // push FP
         tmp.addAll(push(FP));
@@ -554,13 +551,24 @@ public class CmCodeGen {
                 // save the value
                 instrs.addAll(push(AX));
                 // first evaluate the index
-                instrs.addAll(emitExp((Ast.Expression)var.getExpression().get(), env));
-                // add the frame pointer to the calculated index
-                instrs.add(new Instruction.Add(AX, AX, FP));
-                // pop the value being stored to the var into BX
-                instrs.addAll(pop(BX));
-                // and store the value in BX to the address of var (offset + AX)
-                instrs.add(new Instruction.St(BX, offset, AX));
+                instrs.addAll(emitExp((Ast.Expression) var.getExpression().get(), env));
+                if (offset < 0) { // param (only address is on stack)
+                    // get the array address
+                    instrs.add(new Instruction.Ld(BX, offset, FP));
+                    // add the index
+                    instrs.add(new Instruction.Add(AX,AX,BX));
+                    // pop the value being stored to the var into BX
+                    instrs.addAll(pop(BX));
+                    // and store the value in BX to the address of var (offset + AX)
+                    instrs.add(new Instruction.St(BX, 0, AX));
+                } else { // array is on stack
+                    // add the frame pointer to the calculated index
+                    instrs.add(new Instruction.Add(AX, AX, FP));
+                    // pop the value being stored to the var into BX
+                    instrs.addAll(pop(BX));
+                    // and store the value in BX to the address of var (offset + AX)
+                    instrs.add(new Instruction.St(BX, offset, AX));
+                }
             }
             // not array
             else {

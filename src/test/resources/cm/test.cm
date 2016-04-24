@@ -1,22 +1,24 @@
 int x[5];
 
-void fill(int a[]) {
+void f(int a[]) {
+  g(a);
+}
+
+void g(int b[]) {
   int i;
-  output(a);
   i = 0;
   while (i < 5) {
-    a[i] = i; /*output(a[i]);*/
+    b[i] = i;
     i = i + 1;
   }
 }
 
-
 void main(void) {
   int i;
-  fill(x);
-    i = 0;
-    while (i < 5) {
-      output(x[i]);
-      i = i + 1;
-    }
+  f(x);
+  i = 0;
+  while (i < 5) {
+    output(x[i]);
+    i = i + 1;
+  }
 }
