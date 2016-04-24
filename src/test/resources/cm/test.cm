@@ -1,0 +1,22 @@
+int x[5];
+
+void fill(int a[]) {
+  int i;
+  output(a);
+  i = 0;
+  while (i < 5) {
+    a[i] = i; /*output(a[i]);*/
+    i = i + 1;
+  }
+}
+
+
+void main(void) {
+  int i;
+  fill(x);
+    i = 0;
+    while (i < 5) {
+      output(x[i]);
+      i = i + 1;
+    }
+}
