@@ -1,7 +1,7 @@
 /* Joshua Graydus | March 2016 */
 package logging;
 
-import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Properties;
 
 public class Logger {
@@ -15,7 +15,7 @@ public class Logger {
     static LogLevel logLevel = LogLevel.INFO;
 
     static {
-        try (final FileInputStream propFile = new FileInputStream("logger.properties")) {
+        try (final InputStream propFile = Logger.class.getClassLoader().getResourceAsStream("logger.properties")) {
             final Properties properties = new Properties();
             properties.load(propFile);
             final String level = properties.getProperty("log-level").trim();
