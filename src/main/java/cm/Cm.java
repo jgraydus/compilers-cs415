@@ -1,3 +1,4 @@
+/* Joshua Graydus | April 2016 */
 package cm;
 
 import data.Either;
