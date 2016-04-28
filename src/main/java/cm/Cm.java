@@ -69,7 +69,7 @@ public class Cm {
         final String outputFileName = outputFileName(fileName);
         System.out.println("writing output file " + outputFileName + "...");
         final File outputFile = new File(outputFileName);
-        writeFile(outputFile, instructions.toString());
+        writeFile(outputFile, code);
 
         System.out.println("ok");
     }
