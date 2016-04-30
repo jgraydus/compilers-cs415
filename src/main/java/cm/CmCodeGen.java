@@ -4,6 +4,8 @@ package cm;
 import data.Pair;
 import tiny.tm.Instruction;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -23,7 +25,9 @@ public class CmCodeGen {
     private static final int CX = 2; // temp register
     private static final int DX = 3; // temp register
 
-    public List<Instruction> emit(final Ast ast) {
+    public List<Instruction> emit(final Ast ast0) {
+        final Ast ast = removeDeadCode(ast0).get();
+
         final int preambleSize = 14;
 
         // give variables unique names
@@ -343,6 +347,8 @@ public class CmCodeGen {
     }
 
     private List<Instruction> emitVar(final Ast.Var var, final Env env) {
+        if ("false".equals(var.getName())) { return singletonList(new Instruction.Ldc(AX, 0, "constant false")); }
+        if ("true".equals(var.getName())) { return singletonList(new Instruction.Ldc(AX, 1, "constant true")); }
         final String name = var.getAttribute(UniqueName.class).get().getName();
         if (env.getLocalVars().containsKey(name)) {
             final int offset = env.getLocalVar(name);
@@ -711,5 +717,79 @@ public class CmCodeGen {
                 new Instruction.Sub(SP, SP, DX), // decrement stack pointer
                 new Instruction.Ld(register, 0, SP) // pop value into register
         );
+    }
+
+    /* optimizations */
+
+    Optional<Ast> removeDeadCode(final Ast ast) {
+        if (ast instanceof Ast.DeclarationList) {
+            final Ast.DeclarationList decs = (Ast.DeclarationList) ast;
+            final List<Ast> children = decs.getDeclarations().stream().map(this::removeDeadCode)
+                    .filter(Optional::isPresent).map(Optional::get).collect(toList());
+            return Optional.of(new Ast.DeclarationList(null, children));
+        }
+        if (ast instanceof Ast.FunDeclaration) {
+            final Ast.FunDeclaration fun = (Ast.FunDeclaration) ast;
+            final Optional<Ast> body = removeDeadCode(fun.getBody());
+            if (body.isPresent()) {
+                return Optional.of(new Ast.FunDeclaration(null,
+                        fun.getType(), fun.getName(), fun.getParams(), body.get()));
+            } else {
+                // replace body with empty expression.  function will be completely optimized away by inliner
+                return Optional.of(new Ast.FunDeclaration(null,
+                        fun.getType(), fun.getName(), fun.getParams(), new Ast.ExpressionStmt(null, Optional.empty())));
+            }
+        }
+        if (ast instanceof Ast.CompoundStatement) {
+            final Ast.CompoundStatement cmpd = (Ast.CompoundStatement) ast;
+            final List<Ast> stmts = cmpd.getStatements().stream().map(this::removeDeadCode)
+                    .filter(Optional::isPresent).map(Optional::get).collect(toList());
+            return Optional.of(new Ast.CompoundStatement(null, cmpd.getLocalDeclarations(), stmts));
+        }
+        if (ast instanceof Ast.IfThen) {
+            final Ast.IfThen ifThen = (Ast.IfThen) ast;
+            final Ast.Expression condition = (Ast.Expression) ifThen.getCondition();
+            if (condition.getLeft() instanceof Ast.Var) {
+                final Ast.Var var = (Ast.Var) condition.getLeft();
+                if ("false".equals(var.getName())) {
+                    return Optional.empty();  // completely remove the if/then statement
+                }
+                if ("true".equals(var.getName())) {
+                    return removeDeadCode(ifThen.getThenPart()); // remove the condition
+                }
+            }
+            return removeDeadCode(ifThen.getThenPart()).map(stmt -> new Ast.IfThen(null, ifThen.getCondition(), stmt));
+        }
+        if (ast instanceof Ast.IfThenElse) {
+            final Ast.IfThenElse ifThenElse = (Ast.IfThenElse) ast;
+            final Ast.Expression condition = (Ast.Expression) ifThenElse.getCondition();
+            if (condition.getLeft() instanceof Ast.Var) {
+                final Ast.Var var = (Ast.Var) condition.getLeft();
+                if ("false".equals(var.getName())) {
+                    return removeDeadCode(ifThenElse.getElsePart()); // remove condition and then part
+                }
+                if ("true".equals(var.getName())) {
+                    return removeDeadCode(ifThenElse.getThenPart()); // remove condition and else part
+                }
+            }
+            return Optional.of(new Ast.IfThenElse(
+                    null,
+                    condition,
+                    removeDeadCode(ifThenElse.getThenPart()).orElse(new Ast.ExpressionStmt(null, Optional.empty())),
+                    removeDeadCode(ifThenElse.getElsePart()).orElse(new Ast.ExpressionStmt(null, Optional.empty()))
+            ));
+        }
+        if (ast instanceof Ast.While) {
+            final Ast.While whileS = (Ast.While) ast;
+            final Ast.Expression condition = (Ast.Expression) whileS.getCondition();
+            if (condition.getLeft() instanceof Ast.Var) {
+                final Ast.Var var = (Ast.Var) condition.getLeft();
+                if ("false".equals(var.getName())) {
+                    return Optional.empty();  // completely remove the while statement
+                }
+            }
+        }
+
+        return Optional.of(ast);
     }
 }
