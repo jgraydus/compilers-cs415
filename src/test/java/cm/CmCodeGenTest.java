@@ -10,6 +10,7 @@ import token.Source;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.HashSet;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
@@ -128,10 +129,48 @@ public class CmCodeGenTest {
                         "  }" +
                         "}";
         final Ast ast = codeGen.removeDeadCode(ast(program)).get();
-        System.out.println(ast);
+        //System.out.println(ast);
         final Ast.DeclarationList decs = (Ast.DeclarationList) ast;
         final Ast.FunDeclaration main = (Ast.FunDeclaration) decs.getDeclarations().get(0);
         final Ast.CompoundStatement body = (Ast.CompoundStatement) main.getBody();
         assertTrue(body.getStatements().isEmpty()); // while statement should be removed
+    }
+
+    @Test
+    public void removeEmptyFunctions1() throws Exception {
+        final String program =
+                "void log(int x) { if (true) { output(x); } } " +
+                "void main(void) { "+
+                        " int x; x = 0; " +
+                        "  while (x < 5) {"+
+                        "    log(x = x + 1); "+
+                        "    log(42); " +
+                        "  } " +
+                        "}";
+        final Ast ast0 = codeGen.removeDeadCode(ast(program)).get();
+        final Ast ast = codeGen.removeEmptyFunctions(ast0, new HashSet<>());
+        System.out.println(ast);
+        final List<Instruction> instrs = codeGen.emit(ast);
+        System.out.println(instrs);
+        System.out.println(instrs.size() + " instructions");
+    }
+
+    @Test
+    public void removeEmptyFunctions2() throws Exception {
+        final String program =
+                "void log(int x) { if (false) { output(x); } } " +
+                        "void main(void) { "+
+                        " int x; x = 0; " +
+                        "  while (x < 5) {"+
+                        "    log(x = x + 1); "+
+                        "    log(42); " +
+                        "  } " +
+                        "}";
+        final Ast ast0 = codeGen.removeDeadCode(ast(program)).get();
+        final Ast ast = codeGen.removeEmptyFunctions(ast0, new HashSet<>());
+        System.out.println(ast);
+        final List<Instruction> instrs = codeGen.emit(ast);
+        System.out.println(instrs);
+        System.out.println(instrs.size() + " instructions");
     }
 }

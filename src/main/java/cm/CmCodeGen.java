@@ -4,16 +4,14 @@ package cm;
 import data.Pair;
 import tiny.tm.Instruction;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.*;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 
 public class CmCodeGen {
 
@@ -471,7 +469,7 @@ public class CmCodeGen {
 
     private List<Instruction> emitCall(final Ast.Call call, final Env env) {
         final String funName = call.getName();
-        // special case for "input" and "output" -- just inline them
+        // special case for "input" and "output" -- just removeEmptyFunctions them
         if ("input".equals(funName)) {
             final List<Instruction> instrs = new LinkedList<>();
             instrs.add(new Instruction.Nop("call to input"));
@@ -493,7 +491,11 @@ public class CmCodeGen {
         final List<Ast> args = call.getArgs();
         final List<Ast.Param> params = funDec.getParams().stream().map(p -> (Ast.Param)p).collect(toList());
         for (int i = args.size()-1; i>=0; i--) {
-            tmp.addAll(emitExp((Ast.Expression) args.get(i), env));
+            if (args.get(i) instanceof Ast.Expression) {
+                tmp.addAll(emitExp((Ast.Expression) args.get(i), env));
+            } else {
+                tmp.addAll(emitAssignment((Ast.Assignment) args.get(i), env));
+            }
             tmp.addAll(push(AX));
         }
         // push FP
@@ -789,7 +791,100 @@ public class CmCodeGen {
                 }
             }
         }
-
         return Optional.of(ast);
+    }
+
+    Ast removeEmptyFunctions(final Ast ast, final Set<String> emptyFunctions) {
+        if (ast instanceof Ast.DeclarationList) {
+            final Ast.DeclarationList decList = (Ast.DeclarationList) ast;
+            final Set<String> emptyFuns = decList.getDeclarations().stream()
+                    .filter(d -> d instanceof Ast.FunDeclaration)
+                    .map(d -> (Ast.FunDeclaration)d)
+                    .filter(d -> ((Ast.CompoundStatement)d.getBody()).getStatements().isEmpty())
+                    .map(Ast.FunDeclaration::getName)
+                    .collect(toSet());
+            if (emptyFuns.isEmpty()) {
+                return ast;
+            } else {
+                final List<Ast> decs = decList.getDeclarations().stream().flatMap(d -> {
+                    if (d instanceof Ast.VarDeclaration) {
+                        return Stream.of(d);
+                    } else {
+                        final Ast.FunDeclaration dec = (Ast.FunDeclaration)d;
+                        if (emptyFuns.contains(dec.getName())) {
+                            return Stream.empty();
+                        } else {
+                            return Stream.of(removeEmptyFunctions(d, emptyFuns));
+                        }
+                    }
+                }).collect(toList());
+                return new Ast.DeclarationList(null, decs);
+            }
+        }
+        if (ast instanceof Ast.FunDeclaration) {
+            final Ast.FunDeclaration fun = (Ast.FunDeclaration)ast;
+            return new Ast.FunDeclaration(null,
+                    fun.getType(),
+                    fun.getName(),
+                    fun.getParams(),
+                    removeEmptyFunctions(fun.getBody(), emptyFunctions));
+        }
+        if (ast instanceof Ast.Call) {
+            final Ast.Call call = (Ast.Call)ast;
+            if (emptyFunctions.contains(call.getName())) {
+                if (call.getArgs().isEmpty()) {
+                    // remove function call entirely.  no instructions are emitted for an empty expression
+                    return new Ast.ExpressionStmt(null, Optional.empty());
+                } else {
+                    // replace pointless function call with statement that evaluates the arguments
+                    // evaluating arguments is necessary because they may have side effects
+                    return new Ast.CompoundStatement(null, emptyList(), reverse(call.getArgs()));
+                }
+            } else {
+                return ast;
+            }
+        }
+        if (ast instanceof Ast.CompoundStatement) {
+            final Ast.CompoundStatement stmt = (Ast.CompoundStatement)ast;
+            return new Ast.CompoundStatement(null,
+                    stmt.getLocalDeclarations(),
+                    stmt.getStatements().stream().map(s -> removeEmptyFunctions(s, emptyFunctions)).collect(toList()));
+        }
+        if (ast instanceof Ast.IfThen) {
+            final Ast.IfThen ifThen = (Ast.IfThen)ast;
+            return new Ast.IfThen(null,
+                    ifThen.getCondition(),
+                    removeEmptyFunctions(ifThen.getThenPart(), emptyFunctions));
+        }
+        if (ast instanceof Ast.IfThenElse) {
+            final Ast.IfThenElse ifThenElse = (Ast.IfThenElse)ast;
+            return new Ast.IfThenElse(null,
+                    ifThenElse.getCondition(),
+                    removeEmptyFunctions(ifThenElse.getThenPart(), emptyFunctions),
+                    removeEmptyFunctions(ifThenElse.getElsePart(), emptyFunctions));
+        }
+        if (ast instanceof Ast.While) {
+            final Ast.While whileS = (Ast.While)ast;
+            return new Ast.While(null,
+                    whileS.getCondition(),
+                    removeEmptyFunctions(whileS.getBody(), emptyFunctions));
+        }
+        if (ast instanceof Ast.ExpressionStmt) {
+            final Ast.ExpressionStmt stmt = (Ast.ExpressionStmt)ast;
+            if (stmt.getExpression().isPresent() && stmt.getExpression().get() instanceof Ast.Expression) {
+                final Ast.Expression exp = (Ast.Expression) stmt.getExpression().get();
+                if (exp.getLeft() instanceof Ast.Call) {
+                    return removeEmptyFunctions(exp.getLeft(), emptyFunctions);
+                }
+            }
+            return ast;
+        }
+        return ast;
+    }
+
+    private <A> List<A> reverse(final List<A> list) {
+        final List<A> result = new ArrayList<>(list);
+        Collections.reverse(result);
+        return result;
     }
 }
