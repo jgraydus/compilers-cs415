@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 
 public class TinyLL1Parser {
@@ -83,17 +84,17 @@ public class TinyLL1Parser {
 
     // production rules
     private final List<Production> ps = new ArrayList<Production>(){{
-        add(new Production(program, asList(stmtSequence)));
+        add(new Production(program, singletonList(stmtSequence)));
         add(new Production(stmtSequence, asList(statement, stmtSequence_)));
         add(new Production(stmtSequence_, asList(semicolon, statement, stmtSequence_)));
-        add(new Production(stmtSequence_, asList(Symbol.epsilon)));
-        add(new Production(statement, asList(ifStmt)));
-        add(new Production(statement, asList(readStmt)));
-        add(new Production(statement, asList(writeStmt)));
-        add(new Production(statement, asList(assignStmt)));
-        add(new Production(statement, asList(repeatStmt)));
+        add(new Production(stmtSequence_, singletonList(Symbol.epsilon)));
+        add(new Production(statement, singletonList(ifStmt)));
+        add(new Production(statement, singletonList(readStmt)));
+        add(new Production(statement, singletonList(writeStmt)));
+        add(new Production(statement, singletonList(assignStmt)));
+        add(new Production(statement, singletonList(repeatStmt)));
         add(new Production(ifStmt, asList(ifS, exp, then, stmtSequence, elsePart)));
-        add(new Production(elsePart, asList(end)));
+        add(new Production(elsePart, singletonList(end)));
         add(new Production(elsePart, asList(elseS, stmtSequence, end)));
         add(new Production(repeatStmt, asList(repeat, stmtSequence, untilS, exp)));
         add(new Production(assignStmt, asList(identifier, assign, exp)));
@@ -101,22 +102,22 @@ public class TinyLL1Parser {
         add(new Production(writeStmt, asList(write, exp)));
         add(new Production(exp, asList(simpleExp, exp_)));
         add(new Production(exp_, asList(comparisonOp, simpleExp)));
-        add(new Production(exp_, asList(Symbol.epsilon)));
-        add(new Production(comparisonOp, asList(lt)));
-        add(new Production(comparisonOp, asList(eq)));
+        add(new Production(exp_, singletonList(Symbol.epsilon)));
+        add(new Production(comparisonOp, singletonList(lt)));
+        add(new Production(comparisonOp, singletonList(eq)));
         add(new Production(simpleExp, asList(term, simpleExp_)));
         add(new Production(simpleExp_, asList(addOp, term, simpleExp_)));
-        add(new Production(simpleExp_, asList(Symbol.epsilon)));
-        add(new Production(addOp, asList(plus)));
-        add(new Production(addOp, asList(minus)));
+        add(new Production(simpleExp_, singletonList(Symbol.epsilon)));
+        add(new Production(addOp, singletonList(plus)));
+        add(new Production(addOp, singletonList(minus)));
         add(new Production(term, asList(factor, term_)));
         add(new Production(term_, asList(mulOp, factor, term_)));
-        add(new Production(term_, asList(Symbol.epsilon)));
-        add(new Production(mulOp, asList(times)));
-        add(new Production(mulOp, asList(div)));
+        add(new Production(term_, singletonList(Symbol.epsilon)));
+        add(new Production(mulOp, singletonList(times)));
+        add(new Production(mulOp, singletonList(div)));
         add(new Production(factor, asList(left, exp, right)));
-        add(new Production(factor, asList(number)));
-        add(new Production(factor, asList(identifier)));
+        add(new Production(factor, singletonList(number)));
+        add(new Production(factor, singletonList(identifier)));
     }};
 
     // associate token types to grammar symbols
