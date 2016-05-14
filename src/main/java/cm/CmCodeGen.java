@@ -737,7 +737,7 @@ public class CmCodeGen {
                 return Optional.of(new Ast.FunDeclaration(null,
                         fun.getType(), fun.getName(), fun.getParams(), body.get()));
             } else {
-                // replace body with empty expression.  function will be completely optimized away by inliner
+                // replace body with empty expression
                 return Optional.of(new Ast.FunDeclaration(null,
                         fun.getType(), fun.getName(), fun.getParams(), new Ast.ExpressionStmt(null, Optional.empty())));
             }
