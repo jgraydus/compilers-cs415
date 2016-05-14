@@ -2,6 +2,10 @@ Notes for my future self so I can remember how dumb I was.
 
 ## Description ##
 
+tl;dr parser combinator for lexer, LL1 and LR1 parser generators for
+parser, some good decisions were made, some bad decisions were made,
+learned a lot
+
 This is a project for a class on compilers using the book Compiler
 Construction Principles and Practice by Kenneth C. Louden. The code
 includes compilers for two languages described in the book: the
@@ -203,3 +207,15 @@ to do after I've hard coded my addresses into machine instructions. I
 should have used an intermediate representation like LLVM does in
 order to facilitate these optimizations. In fact, I've started
 rewriting the C- compiler in Haskell in order to do exactly this.
+
+## Conclusion ##
+
+This was a pretty good challenge for someone with my limited mental
+capacity. I learned a lot about what goes into compiling a programming
+language and had a lot of fun (and some frustration) implementing cool
+algorithms. The LR parser was particularly tricky.
+
+I also reaffirmed my belief that Java is Not a Very Good Language
+for pretty much anything except things for which someone else has
+already written a library or framework that does exactly what you want
+to do.
