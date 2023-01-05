@@ -4,7 +4,7 @@
 { write it back }
 {write x;}
 
-{ do some arithematic }
+{ do some arithmetic }
 {y := 3 + (4 - x) * 10 / 3;
 write y;}
 
